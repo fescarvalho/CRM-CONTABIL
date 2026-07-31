@@ -5,11 +5,19 @@ import Link from 'next/link'
 import { logout } from '@/app/actions/auth'
 import { Building2, Users, FileText, LogOut, FolderOpen } from 'lucide-react'
 
+import { redirect } from 'next/navigation'
+
 export default async function DashboardPage() {
-  const data = await getDashboardData()
+  let data
+  try {
+    data = await getDashboardData()
+  } catch (e) {
+    console.error('Dashboard error:', e)
+    redirect('/login')
+  }
 
   if (!data) {
-    return <div>Acesso negado.</div>
+    redirect('/login')
   }
 
   return (
