@@ -41,7 +41,7 @@ export async function getDashboardData() {
       include: { empresa: true }
     })
 
-    const empresasAtribuidas = acessos.map(a => a.empresa)
+    const empresasAtribuidas = acessos.map((a: { empresa: typeof acessos[number]['empresa'] }) => a.empresa)
 
     return {
       role: 'CONTADOR',
