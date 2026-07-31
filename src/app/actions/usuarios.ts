@@ -57,7 +57,7 @@ export async function criarUsuarioAdmin(formData: FormData) {
       data: {
         email,
         nome,
-        role
+        role: role as 'ADMIN' | 'CONTADOR'
       }
     })
   } catch (err: any) {
