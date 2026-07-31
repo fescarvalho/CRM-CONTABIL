@@ -53,11 +53,18 @@ export default async function DashboardPage() {
           </div>
           <div className="flex items-center gap-3">
             {data.role === 'ADMIN' && (
-              <Link href="/empresas">
-                <Button variant="outline" className="bg-zinc-900/50 border-zinc-700 hover:bg-zinc-800 hover:text-white transition-colors">
-                  <Building2 className="w-4 h-4 mr-2"/> Gerenciar Empresas
-                </Button>
-              </Link>
+              <>
+                <Link href="/usuarios">
+                  <Button variant="outline" className="bg-zinc-900/50 border-zinc-700 hover:bg-zinc-800 hover:text-white transition-colors">
+                    <Users className="w-4 h-4 mr-2"/> Gerenciar Usuários
+                  </Button>
+                </Link>
+                <Link href="/empresas">
+                  <Button variant="outline" className="bg-zinc-900/50 border-zinc-700 hover:bg-zinc-800 hover:text-white transition-colors">
+                    <Building2 className="w-4 h-4 mr-2"/> Gerenciar Empresas
+                  </Button>
+                </Link>
+              </>
             )}
             <form action={logout}>
               <Button variant="destructive" type="submit" className="shadow-lg shadow-destructive/20 transition-all hover:scale-105">
@@ -83,7 +90,7 @@ export default async function DashboardPage() {
             </Card>
             <Card className="bg-zinc-950/40 backdrop-blur-md border-zinc-800/50 shadow-xl hover:border-primary/30 transition-all group">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-zinc-400 group-hover:text-zinc-300 transition-colors">Contadores</CardTitle>
+                <CardTitle className="text-sm font-medium text-zinc-400 group-hover:text-zinc-300 transition-colors">Total Usuários</CardTitle>
                 <div className="p-2 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
                   <Users className="h-4 w-4 text-primary" />
                 </div>

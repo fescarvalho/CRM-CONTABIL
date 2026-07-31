@@ -1,22 +1,25 @@
-import { getEmpresas, getContadores, createEmpresa, updateAcessos } from '@/app/actions/empresas'
+import { getEmpresas, getUsuarios, createEmpresa } from '@/app/actions/empresas'
 import { Button } from '@/components/ui/button'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Input } from '@/components/ui/input'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
+import { ArrowLeft } from 'lucide-react'
+import Link from 'next/link'
+import { AcessosModal } from './AcessosModal'
 
 export default async function EmpresasPage() {
   let empresas = []
-  let contadores = []
+  let usuarios = []
 
   try {
     const data = await Promise.all([
       getEmpresas(),
-      getContadores()
+      getUsuarios()
     ])
     empresas = data[0]
-    contadores = data[1]
+    usuarios = data[1]
   } catch (err) {
     console.error("Erro ao carregar empresas:", err)
     return (
@@ -34,6 +37,15 @@ export default async function EmpresasPage() {
 
       <div className="max-w-7xl mx-auto space-y-8 relative z-10">
         
+        {/* Botão Voltar */}
+        <div>
+          <Link href="/">
+            <Button variant="ghost" className="text-zinc-400 hover:text-white hover:bg-zinc-800">
+              <ArrowLeft className="w-4 h-4 mr-2" /> Voltar ao Dashboard
+            </Button>
+          </Link>
+        </div>
+
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-zinc-950/40 backdrop-blur-md p-6 rounded-2xl border border-zinc-800/50 shadow-xl shadow-black/20">
           <div className="flex items-center gap-3">
@@ -75,7 +87,7 @@ export default async function EmpresasPage() {
                 <TableHead className="text-zinc-400 font-medium">Razão Social</TableHead>
                 <TableHead className="text-zinc-400 font-medium">CNPJ</TableHead>
                 <TableHead className="text-zinc-400 font-medium">Status</TableHead>
-                <TableHead className="text-zinc-400 font-medium">Contadores Atribuídos</TableHead>
+                <TableHead className="text-zinc-400 font-medium">Usuários Atribuídos</TableHead>
                 <TableHead className="text-right text-zinc-400 font-medium">Ações</TableHead>
               </TableRow>
             </TableHeader>
@@ -107,9 +119,12 @@ export default async function EmpresasPage() {
                     </div>
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button variant="ghost" size="sm" className="text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors">
-                      Gerenciar Acessos
-                    </Button>
+                    <AcessosModal 
+                      empresaId={empresa.id}
+                      razaoSocial={empresa.razaoSocial}
+                      usuarios={usuarios}
+                      acessosAtuais={empresa.acessos.map((a: any) => a.usuarioId)}
+                    />
                   </TableCell>
                 </TableRow>
               ))}

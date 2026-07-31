@@ -1,7 +1,7 @@
 import prisma from '@/lib/prisma'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { Folder, File as FileIcon, Upload, Plus, Download, Trash2 } from 'lucide-react'
+import { Folder, File as FileIcon, Upload, Plus, Download, Trash2, ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
@@ -65,6 +65,14 @@ export default async function FileManagerPage({
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 p-8">
       <div className="max-w-7xl mx-auto space-y-6">
         
+        <div>
+          <Link href="/empresas">
+            <Button variant="ghost" className="text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white pl-0">
+              <ArrowLeft className="w-4 h-4 mr-2" /> Voltar para Empresas
+            </Button>
+          </Link>
+        </div>
+
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">{empresa.razaoSocial}</h1>

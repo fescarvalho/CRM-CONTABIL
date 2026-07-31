@@ -39,10 +39,9 @@ export async function createEmpresa(formData: FormData) {
   revalidatePath('/empresas')
 }
 
-export async function getContadores() {
+export async function getUsuarios() {
   await checkAdmin()
   return await prisma.usuario.findMany({
-    where: { role: 'CONTADOR' },
     orderBy: { nome: 'asc' }
   })
 }
