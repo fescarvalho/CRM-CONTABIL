@@ -37,25 +37,30 @@ export default async function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 p-8">
-      <div className="max-w-7xl mx-auto space-y-8">
+    <div className="min-h-screen bg-zinc-950 p-8 relative overflow-hidden">
+      {/* Background Decorativo */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[80%] h-[30%] bg-primary/10 rounded-[100%] blur-[120px] pointer-events-none" />
+
+      <div className="max-w-7xl mx-auto space-y-8 relative z-10">
         
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-zinc-950/40 backdrop-blur-md p-6 rounded-2xl border border-zinc-800/50 shadow-xl shadow-black/20">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-            <p className="text-muted-foreground">
-              Bem-vindo(a), {data.user.nome} ({data.role})
+            <h1 className="text-3xl font-bold tracking-tight text-white">Dashboard</h1>
+            <p className="text-zinc-400 mt-1">
+              Bem-vindo(a), <span className="text-primary font-medium">{data.user.nome}</span> ({data.role})
             </p>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             {data.role === 'ADMIN' && (
               <Link href="/empresas">
-                <Button variant="outline"><Building2 className="w-4 h-4 mr-2"/> Gerenciar Empresas</Button>
+                <Button variant="outline" className="bg-zinc-900/50 border-zinc-700 hover:bg-zinc-800 hover:text-white transition-colors">
+                  <Building2 className="w-4 h-4 mr-2"/> Gerenciar Empresas
+                </Button>
               </Link>
             )}
             <form action={logout}>
-              <Button variant="destructive" type="submit">
+              <Button variant="destructive" type="submit" className="shadow-lg shadow-destructive/20 transition-all hover:scale-105">
                 <LogOut className="w-4 h-4 mr-2" /> Sair
               </Button>
             </form>
@@ -64,32 +69,38 @@ export default async function DashboardPage() {
 
         {/* ADMIN Stats */}
         {data.role === 'ADMIN' && data.stats && (
-          <div className="grid gap-4 md:grid-cols-3">
-            <Card>
+          <div className="grid gap-6 md:grid-cols-3">
+            <Card className="bg-zinc-950/40 backdrop-blur-md border-zinc-800/50 shadow-xl hover:border-primary/30 transition-all group">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Empresas</CardTitle>
-                <Building2 className="h-4 w-4 text-muted-foreground" />
+                <CardTitle className="text-sm font-medium text-zinc-400 group-hover:text-zinc-300 transition-colors">Total Empresas</CardTitle>
+                <div className="p-2 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
+                  <Building2 className="h-4 w-4 text-primary" />
+                </div>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{data.stats.totalEmpresas}</div>
+                <div className="text-3xl font-bold text-white">{data.stats.totalEmpresas}</div>
               </CardContent>
             </Card>
-            <Card>
+            <Card className="bg-zinc-950/40 backdrop-blur-md border-zinc-800/50 shadow-xl hover:border-primary/30 transition-all group">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Usuários (Contadores)</CardTitle>
-                <Users className="h-4 w-4 text-muted-foreground" />
+                <CardTitle className="text-sm font-medium text-zinc-400 group-hover:text-zinc-300 transition-colors">Contadores</CardTitle>
+                <div className="p-2 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
+                  <Users className="h-4 w-4 text-primary" />
+                </div>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{data.stats.totalUsuarios}</div>
+                <div className="text-3xl font-bold text-white">{data.stats.totalUsuarios}</div>
               </CardContent>
             </Card>
-            <Card>
+            <Card className="bg-zinc-950/40 backdrop-blur-md border-zinc-800/50 shadow-xl hover:border-primary/30 transition-all group">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Documentos</CardTitle>
-                <FileText className="h-4 w-4 text-muted-foreground" />
+                <CardTitle className="text-sm font-medium text-zinc-400 group-hover:text-zinc-300 transition-colors">Documentos</CardTitle>
+                <div className="p-2 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
+                  <FileText className="h-4 w-4 text-primary" />
+                </div>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{data.stats.totalDocumentos}</div>
+                <div className="text-3xl font-bold text-white">{data.stats.totalDocumentos}</div>
               </CardContent>
             </Card>
           </div>
@@ -97,26 +108,31 @@ export default async function DashboardPage() {
 
         {/* Lista de Empresas (Acesso Rápido) */}
         <div>
-          <h2 className="text-xl font-semibold mb-4">
-            {data.role === 'ADMIN' ? 'Todas as Empresas' : 'Suas Empresas Atribuídas'}
-          </h2>
+          <div className="flex items-center gap-2 mb-6">
+            <div className="w-1 h-6 bg-primary rounded-full"></div>
+            <h2 className="text-xl font-semibold text-white">
+              {data.role === 'ADMIN' ? 'Todas as Empresas' : 'Suas Empresas Atribuídas'}
+            </h2>
+          </div>
+          
           {data.empresas.length === 0 ? (
-            <Card>
-              <CardContent className="p-8 text-center text-muted-foreground">
+            <Card className="bg-zinc-950/40 backdrop-blur-md border-zinc-800/50 border-dashed">
+              <CardContent className="p-12 text-center text-zinc-500">
+                <Building2 className="w-12 h-12 mx-auto mb-4 opacity-20" />
                 Nenhuma empresa encontrada.
               </CardContent>
             </Card>
           ) : (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {data.empresas.map(empresa => (
-                <Card key={empresa.id} className="hover:border-primary/50 transition-colors">
+                <Card key={empresa.id} className="bg-zinc-950/40 backdrop-blur-md border-zinc-800/50 hover:border-primary/50 hover:shadow-primary/5 transition-all group flex flex-col">
                   <CardHeader>
-                    <CardTitle className="text-lg">{empresa.razaoSocial}</CardTitle>
-                    <p className="text-sm text-muted-foreground">CNPJ: {empresa.cnpj}</p>
+                    <CardTitle className="text-lg text-white group-hover:text-primary transition-colors">{empresa.razaoSocial}</CardTitle>
+                    <p className="text-sm text-zinc-500 font-mono">CNPJ: {empresa.cnpj}</p>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="mt-auto pt-4">
                     <Link href={`/empresas/${empresa.id}`}>
-                      <Button className="w-full">
+                      <Button className="w-full bg-zinc-900 text-zinc-300 hover:bg-primary hover:text-white transition-all">
                         <FolderOpen className="w-4 h-4 mr-2" /> Abrir Arquivos
                       </Button>
                     </Link>
