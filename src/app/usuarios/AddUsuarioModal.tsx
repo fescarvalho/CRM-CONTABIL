@@ -27,10 +27,10 @@ export function AddUsuarioModal() {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 transition-all hover:scale-105">
-          Novo Usuário
-        </Button>
+      <DialogTrigger render={
+        <Button className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 transition-all hover:scale-105" />
+      }>
+        Novo Usuário
       </DialogTrigger>
       <DialogContent className="bg-zinc-950/90 backdrop-blur-xl border-zinc-800">
         <DialogHeader>

@@ -48,10 +48,10 @@ export function AcessosModal({ empresaId, razaoSocial, usuarios, acessosAtuais }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="ghost" size="sm" className="text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors">
-          Gerenciar Acessos
-        </Button>
+      <DialogTrigger render={
+        <Button variant="ghost" size="sm" className="text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors" />
+      }>
+        Gerenciar Acessos
       </DialogTrigger>
       <DialogContent className="bg-zinc-950/90 backdrop-blur-xl border-zinc-800 text-white max-w-md">
         <DialogHeader>
