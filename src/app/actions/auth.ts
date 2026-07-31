@@ -16,11 +16,16 @@ export async function login(_prevState: { error: string } | null, formData: Form
     return { error: 'E-mail ou senha inválidos.' }
   }
 
-  const dbUser = await prisma.usuario.findUnique({ where: { email } })
+  try {
+    const dbUser = await prisma.usuario.findUnique({ where: { email } })
 
-  if (!dbUser) {
-    await supabase.auth.signOut()
-    return { error: 'Usuário não cadastrado no sistema contábil.' }
+    if (!dbUser) {
+      await supabase.auth.signOut()
+      return { error: 'Usuário não cadastrado no sistema contábil.' }
+    }
+  } catch (err: any) {
+    console.error('Prisma Login Error:', err)
+    return { error: 'Erro de conexão com o banco de dados (Prisma).' }
   }
 
   redirect('/')
