@@ -2,6 +2,7 @@
 
 import prisma from '@/lib/prisma'
 import { createClient } from '@/lib/supabase/server'
+import type { Empresa } from '@prisma/client'
 
 export async function getDashboardData() {
   const supabase = await createClient()
@@ -25,7 +26,7 @@ export async function getDashboardData() {
     })
 
     return {
-      role: 'ADMIN',
+      role: 'ADMIN' as const,
       stats: {
         totalEmpresas,
         totalUsuarios,
@@ -41,10 +42,10 @@ export async function getDashboardData() {
       include: { empresa: true }
     })
 
-    const empresasAtribuidas = acessos.map((a: { empresa: typeof acessos[number]['empresa'] }) => a.empresa)
+    const empresasAtribuidas: Empresa[] = acessos.map(acesso => acesso.empresa)
 
     return {
-      role: 'CONTADOR',
+      role: 'CONTADOR' as const,
       stats: null,
       empresas: empresasAtribuidas,
       user: dbUser
