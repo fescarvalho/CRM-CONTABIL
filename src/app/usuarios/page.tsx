@@ -82,13 +82,13 @@ export default async function UsuariosPage() {
                       {usuario.role === 'ADMIN' ? (
                         <span className="text-zinc-500 text-sm">Todas (Admin)</span>
                       ) : (
-                        usuario.acessos?.map((a: any) => (
+                        usuario.empresasAtribuidas?.map((a: any) => (
                           <Badge key={a.empresaId} variant="outline" className="border-zinc-700 text-zinc-300 bg-zinc-900/50">
                             {a.empresa.razaoSocial}
                           </Badge>
                         ))
                       )}
-                      {usuario.role !== 'ADMIN' && (!usuario.acessos || usuario.acessos.length === 0) && (
+                      {usuario.role !== 'ADMIN' && (!usuario.empresasAtribuidas || usuario.empresasAtribuidas.length === 0) && (
                         <span className="text-zinc-600 text-sm italic">Nenhum</span>
                       )}
                     </div>

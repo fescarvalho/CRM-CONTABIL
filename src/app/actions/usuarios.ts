@@ -20,7 +20,7 @@ export async function getTodosUsuarios() {
   return await prisma.usuario.findMany({
     orderBy: { nome: 'asc' },
     include: {
-      acessos: {
+      empresasAtribuidas: {
         include: { empresa: true }
       }
     }
