@@ -4,8 +4,8 @@ import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import { logout } from '@/app/actions/auth'
 import { Building2, Users, FileText, LogOut, FolderOpen } from 'lucide-react'
-
 import { redirect } from 'next/navigation'
+import { createClient } from '@/lib/supabase/server'
 
 export default async function DashboardPage() {
   let data
@@ -13,11 +13,27 @@ export default async function DashboardPage() {
     data = await getDashboardData()
   } catch (e) {
     console.error('Dashboard error:', e)
-    redirect('/login')
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-zinc-950 text-white gap-4 p-4 text-center">
+        <h1 className="text-xl font-bold text-red-500">Erro de conexão com o banco de dados</h1>
+        <p className="text-zinc-400">Verifique as variáveis DATABASE_URL no Vercel.</p>
+        <form action={logout}>
+          <Button variant="outline" type="submit">Sair da conta</Button>
+        </form>
+      </div>
+    )
   }
 
   if (!data) {
-    redirect('/login')
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-zinc-950 text-white gap-4 p-4 text-center">
+        <h1 className="text-xl font-bold text-yellow-500">Usuário não encontrado no sistema</h1>
+        <p className="text-zinc-400">Você está logado, mas seu e-mail não foi cadastrado no banco de dados como ADMIN ou CONTADOR.</p>
+        <form action={logout}>
+          <Button variant="outline" type="submit">Sair e tentar novamente</Button>
+        </form>
+      </div>
+    )
   }
 
   return (
