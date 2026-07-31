@@ -1,0 +1,82 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Níveis de acesso globais
+enum Role {
+  ADMIN       // Dono/Gestor do escritório (Acesso total)
+  CONTADOR    // Funcionário (Acesso apenas às empresas atribuídas)
+}
+
+model Usuario {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  nome      String
+  role      Role     @default(CONTADOR)
+  
+  // Relação de quais empresas este usuário tem acesso explícito
+  empresasAtribuidas AcessoEmpresa[]
+  
+  criadoEm  DateTime @default(now())
+}
+
+model Empresa {
+  id           String   @id @default(uuid())
+  cnpj         String   @unique
+  razaoSocial  String
+  status       String   @default("Ativo") // Ativo, Inativo
+  
+  acessos      AcessoEmpresa[]
+  pastas       Pasta[]
+  documentos   Documento[]
+  
+  criadoEm     DateTime @default(now())
+}
+
+// Tabela Pivô: Define quem acessa o quê (Multi-tenancy granular)
+model AcessoEmpresa {
+  id         String   @id @default(uuid())
+  usuarioId  String
+  empresaId  String
+  
+  usuario    Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  empresa    Empresa  @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+
+  @@unique([usuarioId, empresaId]) // Evita duplicidade de acesso
+}
+
+// Sistema de Arquivos Virtual (Estrutura de Pastas Lógicas)
+model Pasta {
+  id         String   @id @default(uuid())
+  nome       String   // Nome da pasta (ex: "Impostos 2026")
+  empresaId  String
+  
+  // Permite criar subpastas infinitas (parentId)
+  parentId   String?
+  parent     Pasta?   @relation("Subpastas", fields: [parentId], references: [id], onDelete: Cascade)
+  subpastas  Pasta[]  @relation("Subpastas")
+
+  documentos Documento[]
+  empresa    Empresa  @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+}
+
+// Referência do arquivo PDF físico armazenado no Storage Bucket
+model Documento {
+  id           String   @id @default(uuid())
+  nome         String   // Nome de exibição (ex: "DARF_Jan.pdf")
+  urlStorage   String   // Caminho real no bucket privado (ex: "empresa-id/pastas/arquivo.pdf")
+  tamanhoBytes Int
+  tipoMime     String   @default("application/pdf") // Restringir a PDF
+  
+  pastaId    String?  // Se nulo, está na raiz da empresa
+  empresaId  String
+  
+  pasta      Pasta?   @relation(fields: [pastaId], references: [id], onDelete: SetNull)
+  empresa    Empresa  @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  
+  criadoEm   DateTime @default(now())
+}

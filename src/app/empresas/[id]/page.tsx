@@ -1,0 +1,182 @@
+import prisma from '@/lib/prisma'
+import { createClient } from '@/lib/supabase/server'
+import { redirect } from 'next/navigation'
+import { Folder, File as FileIcon, Upload, Plus, Download, Trash2 } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { criarPasta, uploadDocumento, excluirDocumento, getSignedDownloadUrl } from '@/app/actions/files'
+import Link from 'next/link'
+
+export default async function FileManagerPage({
+  params,
+  searchParams
+}: {
+  params: Promise<{ id: string }>
+  searchParams: Promise<{ folder?: string }>
+}) {
+  const { id: empresaId } = await params
+  const { folder: currentFolderId } = await searchParams
+
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const dbUser = await prisma.usuario.findUnique({ where: { email: user.email } })
+  if (!dbUser) redirect('/login')
+
+  if (dbUser.role !== 'ADMIN') {
+    const acesso = await prisma.acessoEmpresa.findUnique({
+      where: { usuarioId_empresaId: { usuarioId: dbUser.id, empresaId } }
+    })
+    if (!acesso) redirect('/')
+  }
+
+  const empresa = await prisma.empresa.findUnique({ where: { id: empresaId } })
+  if (!empresa) return <div>Empresa não encontrada</div>
+
+  // Busca pastas e documentos da pasta atual
+  const pastas = await prisma.pasta.findMany({
+    where: { empresaId, parentId: currentFolderId || null },
+    orderBy: { nome: 'asc' }
+  })
+
+  const documentos = await prisma.documento.findMany({
+    where: { empresaId, pastaId: currentFolderId || null },
+    orderBy: { nome: 'asc' }
+  })
+
+  // Breadcrumb
+  let breadcrumbs: { id: string, nome: string }[] = []
+  if (currentFolderId) {
+    let curr = await prisma.pasta.findUnique({ where: { id: currentFolderId } })
+    while (curr) {
+      breadcrumbs.unshift({ id: curr.id, nome: curr.nome })
+      if (curr.parentId) {
+        curr = await prisma.pasta.findUnique({ where: { id: curr.parentId } })
+      } else {
+        break
+      }
+    }
+  }
+
+  return (
+    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 p-8">
+      <div className="max-w-7xl mx-auto space-y-6">
+        
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">{empresa.razaoSocial}</h1>
+            <div className="flex items-center text-muted-foreground gap-2 mt-2">
+              <Link href={`/empresas/${empresaId}`} className="hover:underline">Home</Link>
+              {breadcrumbs.map(b => (
+                <span key={b.id} className="flex items-center gap-2">
+                  <span>/</span>
+                  <Link href={`/empresas/${empresaId}?folder=${b.id}`} className="hover:underline">
+                    {b.nome}
+                  </Link>
+                </span>
+              ))}
+            </div>
+          </div>
+          
+          <div className="flex gap-4">
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="outline"><Plus className="w-4 h-4 mr-2" /> Nova Pasta</Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Criar Nova Pasta</DialogTitle>
+                </DialogHeader>
+                <form action={criarPasta} className="space-y-4">
+                  <input type="hidden" name="empresaId" value={empresaId} />
+                  {currentFolderId && <input type="hidden" name="parentId" value={currentFolderId} />}
+                  <div className="space-y-2">
+                    <Label htmlFor="nome">Nome da Pasta</Label>
+                    <Input id="nome" name="nome" required />
+                  </div>
+                  <Button type="submit" className="w-full">Criar</Button>
+                </form>
+              </DialogContent>
+            </Dialog>
+
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button><Upload className="w-4 h-4 mr-2" /> Enviar PDF</Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Enviar Documento PDF</DialogTitle>
+                </DialogHeader>
+                <form action={uploadDocumento} className="space-y-4">
+                  <input type="hidden" name="empresaId" value={empresaId} />
+                  {currentFolderId && <input type="hidden" name="pastaId" value={currentFolderId} />}
+                  <div className="space-y-2">
+                    <Label htmlFor="file">Arquivo PDF</Label>
+                    <Input id="file" name="file" type="file" accept="application/pdf" required />
+                  </div>
+                  <Button type="submit" className="w-full">Fazer Upload</Button>
+                </form>
+              </DialogContent>
+            </Dialog>
+          </div>
+        </div>
+
+        <div className="border rounded-lg bg-card">
+          {pastas.length === 0 && documentos.length === 0 ? (
+            <div className="p-8 text-center text-muted-foreground">
+              Esta pasta está vazia.
+            </div>
+          ) : (
+            <div className="divide-y">
+              {pastas.map(pasta => (
+                <div key={pasta.id} className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors">
+                  <Link href={`/empresas/${empresaId}?folder=${pasta.id}`} className="flex items-center gap-3 flex-1">
+                    <Folder className="w-5 h-5 text-blue-500" />
+                    <span className="font-medium">{pasta.nome}</span>
+                  </Link>
+                  <div className="flex gap-2">
+                    {/* Ações de Pasta: Renomear, Excluir */}
+                  </div>
+                </div>
+              ))}
+              
+              {documentos.map(doc => (
+                <div key={doc.id} className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors">
+                  <div className="flex items-center gap-3 flex-1">
+                    <FileIcon className="w-5 h-5 text-red-500" />
+                    <div>
+                      <div className="font-medium">{doc.nome}</div>
+                      <div className="text-xs text-muted-foreground">{(doc.tamanhoBytes / 1024).toFixed(2)} KB</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <form action={async () => {
+                      'use server'
+                      const url = await getSignedDownloadUrl(empresaId, doc.urlStorage)
+                      redirect(url)
+                    }}>
+                      <Button variant="ghost" size="icon" type="submit" title="Baixar">
+                        <Download className="w-4 h-4" />
+                      </Button>
+                    </form>
+                    <form action={excluirDocumento}>
+                      <input type="hidden" name="id" value={doc.id} />
+                      <input type="hidden" name="empresaId" value={empresaId} />
+                      <input type="hidden" name="urlStorage" value={doc.urlStorage} />
+                      <Button variant="ghost" size="icon" type="submit" className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950">
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </form>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
