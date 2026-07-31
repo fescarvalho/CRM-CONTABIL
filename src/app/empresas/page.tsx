@@ -19,8 +19,8 @@ export default async function EmpresasPage() {
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold tracking-tight">Gestão de Empresas</h1>
           <Dialog>
-            <DialogTrigger asChild>
-              <Button>Nova Empresa</Button>
+            <DialogTrigger render={<Button />}>
+              Nova Empresa
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>

@@ -83,9 +83,7 @@ export default async function FileManagerPage({
           
           <div className="flex gap-4">
             <Dialog>
-              <DialogTrigger asChild>
-                <Button variant="outline"><Plus className="w-4 h-4 mr-2" /> Nova Pasta</Button>
-              </DialogTrigger>
+              <DialogTrigger render={<Button variant="outline"><Plus className="w-4 h-4 mr-2" /> Nova Pasta</Button>} />
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>Criar Nova Pasta</DialogTitle>
@@ -103,9 +101,7 @@ export default async function FileManagerPage({
             </Dialog>
 
             <Dialog>
-              <DialogTrigger asChild>
-                <Button><Upload className="w-4 h-4 mr-2" /> Enviar PDF</Button>
-              </DialogTrigger>
+              <DialogTrigger render={<Button><Upload className="w-4 h-4 mr-2" /> Enviar PDF</Button>} />
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>Enviar Documento PDF</DialogTitle>
