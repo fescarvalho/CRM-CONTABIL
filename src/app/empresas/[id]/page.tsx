@@ -11,6 +11,7 @@ import Link from 'next/link'
 import { UploadDocumentoModal } from './UploadDocumentoModal'
 import { RenomearPastaModal } from './RenomearPastaModal'
 import { DocumentosListClient } from './DocumentosListClient'
+import { DeleteFolderButton } from './DeleteFolderButton'
 import { formatCNPJ } from '@/lib/utils'
 
 export default async function FileManagerPage({
@@ -137,13 +138,7 @@ export default async function FileManagerPage({
                     <form action={excluirPasta}>
                       <input type="hidden" name="id" value={pasta.id} />
                       <input type="hidden" name="empresaId" value={empresaId} />
-                      <Button variant="ghost" size="icon" type="submit" title="Excluir Pasta" className="text-zinc-500 hover:text-red-500 transition-colors" onClick={(e) => {
-                        if (!confirm('Tem certeza que deseja excluir esta pasta? Os arquivos dentro dela NÃO serão apagados, mas voltarão para a raiz da empresa.')) {
-                          e.preventDefault()
-                        }
-                      }}>
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                      <DeleteFolderButton />
                     </form>
                   </div>
                 </div>
