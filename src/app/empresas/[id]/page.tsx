@@ -153,8 +153,18 @@ export default async function FileManagerPage({
           
           <DocumentosListClient 
             empresaId={empresaId}
-            documentos={documentos}
-            todasPastas={todasPastas}
+            documentos={documentos.map(d => ({
+              id: d.id,
+              nome: d.nome,
+              urlStorage: d.urlStorage,
+              tamanhoBytes: d.tamanhoBytes,
+              pastaId: d.pastaId
+            }))}
+            todasPastas={todasPastas.map(p => ({
+              id: p.id,
+              nome: p.nome,
+              parentId: p.parentId
+            }))}
           />
         </div>
       </div>
