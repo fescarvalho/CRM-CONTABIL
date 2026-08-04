@@ -16,6 +16,7 @@ import { FileFilters } from './FileFilters'
 import { DeleteFolderButton } from './DeleteFolderButton'
 import { formatCNPJ } from '@/lib/utils'
 import { MoverPastaModal } from './MoverPastaModal'
+import { PastasListClient } from './PastasListClient'
 
 export default async function FileManagerPage({
   params,
@@ -127,36 +128,13 @@ export default async function FileManagerPage({
 
         <FileFilters />
 
-        <div className="border rounded-lg bg-card">
-          {pastas.length === 0 && documentos.length === 0 ? (
-            <div className="p-8 text-center text-muted-foreground">
-              Esta pasta está vazia.
-            </div>
-          ) : (
-            <div className="divide-y">
-              {pastas.map(pasta => (
-                <div key={pasta.id} className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors group">
-                  <Link href={`/empresas/${empresaId}?folder=${pasta.id}`} className="flex items-center gap-3 flex-1">
-                    <Folder className="w-5 h-5 text-blue-500" />
-                    <span className="font-medium">{pasta.nome}</span>
-                  </Link>
-                  <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <MoverPastaModal 
-                      empresaId={empresaId} 
-                      pastaId={pasta.id} 
-                      pastas={todasPastas.map(p => ({ id: p.id, nome: p.nome, parentId: p.parentId }))} 
-                    />
-                    <RenomearPastaModal empresaId={empresaId} pasta={pasta} />
-                    <form action={excluirPasta}>
-                      <input type="hidden" name="id" value={pasta.id} />
-                      <input type="hidden" name="empresaId" value={empresaId} />
-                      <DeleteFolderButton />
-                    </form>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+        <div className="border rounded-lg bg-card overflow-hidden">
+          <PastasListClient 
+            empresaId={empresaId}
+            pastas={pastas.map(p => ({ id: p.id, nome: p.nome, parentId: p.parentId }))}
+            todasPastas={todasPastas.map(p => ({ id: p.id, nome: p.nome, parentId: p.parentId }))}
+            hasDocumentos={documentos.length > 0}
+          />
           
           <DocumentosListClient 
             empresaId={empresaId}
