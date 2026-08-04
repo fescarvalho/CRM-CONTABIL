@@ -153,8 +153,8 @@ export function DocumentosListClient({ empresaId, documentos, todasPastas }: Pro
               </form>
             </div>
           </div>
-        )
-      })}
+        ))}
+      </div>
     </div>
   )
 }
