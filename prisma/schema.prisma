@@ -21,6 +21,9 @@ model Usuario {
   // Relação de quais empresas este usuário tem acesso explícito
   empresasAtribuidas AcessoEmpresa[]
   
+  // Logs de ações tomadas pelo usuário
+  logsAuditoria      LogAuditoria[]
+  
   criadoEm  DateTime @default(now())
 }
 
