@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button'
 import { getSignedDownloadUrl, excluirDocumento } from '@/app/actions/files'
 import { MoverDocumentoModal } from './MoverDocumentoModal'
 import { MoverEmMassaModal } from './MoverEmMassaModal'
+import { ShareButton } from './ShareButton'
+import { DocumentPreviewModal } from './DocumentPreviewModal'
 
 type Documento = {
   id: string
@@ -128,6 +130,8 @@ export function DocumentosListClient({ empresaId, documentos, todasPastas }: Pro
               </div>
               
               <div className="flex items-center gap-1">
+              <ShareButton documentoId={doc.id} empresaId={empresaId} />
+              <DocumentPreviewModal empresaId={empresaId} nome={doc.nome} urlStorage={doc.urlStorage} />
               <MoverDocumentoModal 
                 empresaId={empresaId} 
                 documentoId={doc.id} 
