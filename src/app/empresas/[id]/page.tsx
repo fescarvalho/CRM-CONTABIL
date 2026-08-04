@@ -118,8 +118,8 @@ export default async function FileManagerPage({
                   <input type="hidden" name="empresaId" value={empresaId} />
                   {currentFolderId && <input type="hidden" name="pastaId" value={currentFolderId} />}
                   <div className="space-y-2">
-                    <Label htmlFor="file">Arquivo PDF</Label>
-                    <Input id="file" name="file" type="file" accept="application/pdf" required />
+                    <Label htmlFor="file">Arquivos PDF (Até 10 por vez)</Label>
+                    <Input id="file" name="file" type="file" accept="application/pdf" multiple required />
                   </div>
                   <Button type="submit" className="w-full">Fazer Upload</Button>
                 </form>

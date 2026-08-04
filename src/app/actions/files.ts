@@ -45,40 +45,54 @@ export async function criarPasta(formData: FormData) {
 }
 
 export async function uploadDocumento(formData: FormData) {
-  const file = formData.get('file') as File
+  const files = formData.getAll('file') as File[]
   const empresaId = formData.get('empresaId') as string
   const pastaId = formData.get('pastaId') as string | null
 
   await checkAccess(empresaId)
 
-  if (file.type !== 'application/pdf') {
-    throw new Error('Apenas arquivos PDF são permitidos')
+  const validFiles = files.filter(f => f.size > 0)
+
+  if (validFiles.length === 0) {
+    throw new Error('Nenhum arquivo enviado')
   }
 
-  const bytes = await file.arrayBuffer()
-  const buffer = Buffer.from(bytes)
+  if (validFiles.length > 10) {
+    throw new Error('Você pode enviar no máximo 10 arquivos por vez')
+  }
 
-  const docId = crypto.randomUUID()
-  const urlStorage = `${empresaId}/${pastaId || 'raiz'}/${docId}.pdf`
-
-  await r2.send(new PutObjectCommand({
-    Bucket: BUCKET_NAME,
-    Key: urlStorage,
-    Body: buffer,
-    ContentType: file.type
-  }))
-
-  await prisma.documento.create({
-    data: {
-      id: docId,
-      nome: file.name,
-      urlStorage,
-      tamanhoBytes: file.size,
-      tipoMime: file.type,
-      pastaId: pastaId || null,
-      empresaId,
+  for (const file of validFiles) {
+    if (file.type !== 'application/pdf') {
+      throw new Error(`O arquivo ${file.name} não é um PDF válido`)
     }
-  })
+  }
+
+  await Promise.all(validFiles.map(async (file) => {
+    const bytes = await file.arrayBuffer()
+    const buffer = Buffer.from(bytes)
+
+    const docId = crypto.randomUUID()
+    const urlStorage = `${empresaId}/${pastaId || 'raiz'}/${docId}.pdf`
+
+    await r2.send(new PutObjectCommand({
+      Bucket: BUCKET_NAME,
+      Key: urlStorage,
+      Body: buffer,
+      ContentType: file.type
+    }))
+
+    await prisma.documento.create({
+      data: {
+        id: docId,
+        nome: file.name,
+        urlStorage,
+        tamanhoBytes: file.size,
+        tipoMime: file.type,
+        pastaId: pastaId || null,
+        empresaId,
+      }
+    })
+  }))
 
   revalidatePath(`/empresas/${empresaId}`)
 }
