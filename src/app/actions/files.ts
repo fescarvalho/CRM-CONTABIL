@@ -44,6 +44,52 @@ export async function criarPasta(formData: FormData) {
   revalidatePath(`/empresas/${empresaId}`)
 }
 
+export async function syncFolderStructure(empresaId: string, baseFolderId: string | null, folderPaths: string[]) {
+  await checkAccess(empresaId)
+
+  const todasPastas = await prisma.pasta.findMany({ where: { empresaId } })
+  const uniquePaths = Array.from(new Set(folderPaths)).sort((a, b) => a.length - b.length)
+
+  const createdIds: Record<string, string> = {} 
+  if (baseFolderId) {
+    createdIds[''] = baseFolderId 
+  }
+
+  for (const path of uniquePaths) {
+    if (!path) continue
+    const parts = path.split('/')
+    let currentParentId = baseFolderId
+
+    let currentPath = ''
+    for (const part of parts) {
+      currentPath = currentPath ? `${currentPath}/${part}` : part
+      
+      if (createdIds[currentPath]) {
+        currentParentId = createdIds[currentPath]
+        continue
+      }
+
+      let folder = todasPastas.find(p => p.nome === part && p.parentId === currentParentId)
+      
+      if (!folder) {
+        folder = await prisma.pasta.create({
+          data: {
+            nome: part,
+            empresaId,
+            parentId: currentParentId
+          }
+        })
+        todasPastas.push(folder)
+      }
+      
+      createdIds[currentPath] = folder.id
+      currentParentId = folder.id
+    }
+  }
+
+  return createdIds
+}
+
 export async function renamePasta(formData: FormData) {
   const id = formData.get('id') as string
   const nome = formData.get('nome') as string
