@@ -55,10 +55,12 @@ export function MoverPastaModal({ empresaId, pastaId, pastas }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
+      <DialogTrigger render={
         <Button variant="ghost" size="icon" title="Mover Pasta" className="text-zinc-500 hover:text-blue-400 transition-colors">
           <FolderSymlink className="w-4 h-4" />
         </Button>
+      }>
+        Mover
       </DialogTrigger>
       <DialogContent className="bg-zinc-950/90 backdrop-blur-xl border-zinc-800 text-white max-h-[80vh] flex flex-col">
         <DialogHeader>
