@@ -27,12 +27,34 @@ export async function createEmpresa(formData: FormData) {
   await checkAdmin()
   
   const razaoSocial = formData.get('razaoSocial') as string
-  const cnpj = formData.get('cnpj') as string
+  const cnpjRaw = formData.get('cnpj') as string
+  const cnpj = cnpjRaw.replace(/[^a-zA-Z0-9]/g, '').toUpperCase()
   
   await prisma.empresa.create({
     data: {
       razaoSocial,
       cnpj,
+    }
+  })
+  
+  revalidatePath('/empresas')
+}
+
+export async function updateEmpresa(formData: FormData) {
+  await checkAdmin()
+  
+  const id = formData.get('id') as string
+  const razaoSocial = formData.get('razaoSocial') as string
+  const status = formData.get('status') as string
+  const cnpjRaw = formData.get('cnpj') as string
+  const cnpj = cnpjRaw.replace(/[^a-zA-Z0-9]/g, '').toUpperCase()
+  
+  await prisma.empresa.update({
+    where: { id },
+    data: {
+      razaoSocial,
+      cnpj,
+      status
     }
   })
   

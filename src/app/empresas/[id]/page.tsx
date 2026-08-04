@@ -1,13 +1,15 @@
 import prisma from '@/lib/prisma'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { Folder, File as FileIcon, Upload, Plus, Download, Trash2, ArrowLeft } from 'lucide-react'
+import { Folder, File as FileIcon, Plus, Download, Trash2, ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { criarPasta, uploadDocumento, excluirDocumento, getSignedDownloadUrl } from '@/app/actions/files'
+import { criarPasta, excluirDocumento, getSignedDownloadUrl } from '@/app/actions/files'
 import Link from 'next/link'
+import { UploadDocumentoModal } from './UploadDocumentoModal'
+import { formatCNPJ } from '@/lib/utils'
 
 export default async function FileManagerPage({
   params,
@@ -76,6 +78,7 @@ export default async function FileManagerPage({
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">{empresa.razaoSocial}</h1>
+            <p className="text-muted-foreground mt-1">CNPJ: {formatCNPJ(empresa.cnpj)}</p>
             <div className="flex items-center text-muted-foreground gap-2 mt-2">
               <Link href={`/empresas/${empresaId}`} className="hover:underline">Home</Link>
               {breadcrumbs.map(b => (
@@ -108,23 +111,7 @@ export default async function FileManagerPage({
               </DialogContent>
             </Dialog>
 
-            <Dialog>
-              <DialogTrigger render={<Button><Upload className="w-4 h-4 mr-2" /> Enviar PDF</Button>} />
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Enviar Documento PDF</DialogTitle>
-                </DialogHeader>
-                <form action={uploadDocumento} className="space-y-4">
-                  <input type="hidden" name="empresaId" value={empresaId} />
-                  {currentFolderId && <input type="hidden" name="pastaId" value={currentFolderId} />}
-                  <div className="space-y-2">
-                    <Label htmlFor="file">Arquivos PDF (Até 10 por vez)</Label>
-                    <Input id="file" name="file" type="file" accept="application/pdf" multiple required />
-                  </div>
-                  <Button type="submit" className="w-full">Fazer Upload</Button>
-                </form>
-              </DialogContent>
-            </Dialog>
+            <UploadDocumentoModal empresaId={empresaId} pastaId={currentFolderId} />
           </div>
         </div>
 
