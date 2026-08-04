@@ -10,6 +10,7 @@ import { criarPasta, excluirPasta } from '@/app/actions/files'
 import Link from 'next/link'
 import { UploadDocumentoModal } from './UploadDocumentoModal'
 import { RenomearPastaModal } from './RenomearPastaModal'
+import { CriarPastaModal } from './CriarPastaModal'
 import { DocumentosListClient } from './DocumentosListClient'
 import { DeleteFolderButton } from './DeleteFolderButton'
 import { formatCNPJ } from '@/lib/utils'
@@ -98,24 +99,7 @@ export default async function FileManagerPage({
           </div>
           
           <div className="flex gap-4">
-            <Dialog>
-              <DialogTrigger render={<Button variant="outline"><Plus className="w-4 h-4 mr-2" /> Nova Pasta</Button>} />
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Criar Nova Pasta</DialogTitle>
-                </DialogHeader>
-                <form action={criarPasta} className="space-y-4">
-                  <input type="hidden" name="empresaId" value={empresaId} />
-                  {currentFolderId && <input type="hidden" name="parentId" value={currentFolderId} />}
-                  <div className="space-y-2">
-                    <Label htmlFor="nome">Nome da Pasta</Label>
-                    <Input id="nome" name="nome" required />
-                  </div>
-                  <Button type="submit" className="w-full">Criar</Button>
-                </form>
-              </DialogContent>
-            </Dialog>
-
+            <CriarPastaModal empresaId={empresaId} currentFolderId={currentFolderId} />
             <UploadDocumentoModal empresaId={empresaId} pastaId={currentFolderId} />
           </div>
         </div>
