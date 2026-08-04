@@ -20,6 +20,8 @@ export async function getDashboardData() {
     const totalEmpresas = await prisma.empresa.count()
     const totalUsuarios = await prisma.usuario.count()
     const totalDocumentos = await prisma.documento.count()
+    const docStats = await prisma.documento.aggregate({ _sum: { tamanhoBytes: true } })
+    const totalBytes = docStats._sum.tamanhoBytes || 0
 
     const empresas = await prisma.empresa.findMany({
       orderBy: { razaoSocial: 'asc' }
@@ -30,7 +32,8 @@ export async function getDashboardData() {
       stats: {
         totalEmpresas,
         totalUsuarios,
-        totalDocumentos
+        totalDocumentos,
+        totalBytes
       },
       empresas,
       user: dbUser

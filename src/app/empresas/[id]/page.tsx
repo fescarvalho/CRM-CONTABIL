@@ -9,6 +9,8 @@ import { Label } from '@/components/ui/label'
 import { criarPasta, excluirDocumento, getSignedDownloadUrl } from '@/app/actions/files'
 import Link from 'next/link'
 import { UploadDocumentoModal } from './UploadDocumentoModal'
+import { RenomearPastaModal } from './RenomearPastaModal'
+import { MoverDocumentoModal } from './MoverDocumentoModal'
 import { formatCNPJ } from '@/lib/utils'
 
 export default async function FileManagerPage({
@@ -38,11 +40,13 @@ export default async function FileManagerPage({
   const empresa = await prisma.empresa.findUnique({ where: { id: empresaId } })
   if (!empresa) return <div>Empresa não encontrada</div>
 
-  // Busca pastas e documentos da pasta atual
-  const pastas = await prisma.pasta.findMany({
-    where: { empresaId, parentId: currentFolderId || null },
-    orderBy: { nome: 'asc' }
+  // Busca a lista completa de pastas da empresa para o modal de mover
+  const todasPastas = await prisma.pasta.findMany({
+    where: { empresaId }
   })
+
+  // Busca pastas e documentos da pasta atual
+  const pastas = todasPastas.filter(p => p.parentId === (currentFolderId || null)).sort((a, b) => a.nome.localeCompare(b.nome))
 
   const documentos = await prisma.documento.findMany({
     where: { empresaId, pastaId: currentFolderId || null },
@@ -52,11 +56,11 @@ export default async function FileManagerPage({
   // Breadcrumb
   let breadcrumbs: { id: string, nome: string }[] = []
   if (currentFolderId) {
-    let curr = await prisma.pasta.findUnique({ where: { id: currentFolderId } })
+    let curr = todasPastas.find(p => p.id === currentFolderId)
     while (curr) {
       breadcrumbs.unshift({ id: curr.id, nome: curr.nome })
       if (curr.parentId) {
-        curr = await prisma.pasta.findUnique({ where: { id: curr.parentId } })
+        curr = todasPastas.find(p => p.id === curr?.parentId)
       } else {
         break
       }
@@ -129,7 +133,7 @@ export default async function FileManagerPage({
                     <span className="font-medium">{pasta.nome}</span>
                   </Link>
                   <div className="flex gap-2">
-                    {/* Ações de Pasta: Renomear, Excluir */}
+                    <RenomearPastaModal empresaId={empresaId} pasta={pasta} />
                   </div>
                 </div>
               ))}
@@ -144,12 +148,18 @@ export default async function FileManagerPage({
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
+                    <MoverDocumentoModal 
+                      empresaId={empresaId} 
+                      documentoId={doc.id} 
+                      currentPastaId={doc.pastaId} 
+                      pastas={todasPastas} 
+                    />
                     <form action={async () => {
                       'use server'
                       const url = await getSignedDownloadUrl(empresaId, doc.urlStorage)
                       redirect(url)
                     }}>
-                      <Button variant="ghost" size="icon" type="submit" title="Baixar">
+                      <Button variant="ghost" size="icon" type="submit" title="Baixar" className="text-zinc-500 hover:text-green-500 transition-colors">
                         <Download className="w-4 h-4" />
                       </Button>
                     </form>
@@ -157,7 +167,7 @@ export default async function FileManagerPage({
                       <input type="hidden" name="id" value={doc.id} />
                       <input type="hidden" name="empresaId" value={empresaId} />
                       <input type="hidden" name="urlStorage" value={doc.urlStorage} />
-                      <Button variant="ghost" size="icon" type="submit" className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950">
+                      <Button variant="ghost" size="icon" type="submit" className="text-zinc-500 hover:text-red-500 transition-colors">
                         <Trash2 className="w-4 h-4" />
                       </Button>
                     </form>

@@ -76,7 +76,7 @@ export default async function DashboardPage() {
 
         {/* ADMIN Stats */}
         {data.role === 'ADMIN' && data.stats && (
-          <div className="grid gap-6 md:grid-cols-3">
+          <div className="grid gap-6 md:grid-cols-4">
             <Card className="bg-zinc-950/40 backdrop-blur-md border-zinc-800/50 shadow-xl hover:border-primary/30 transition-all group">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium text-zinc-400 group-hover:text-zinc-300 transition-colors">Total Empresas</CardTitle>
@@ -108,6 +108,30 @@ export default async function DashboardPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold text-white">{data.stats.totalDocumentos}</div>
+              </CardContent>
+            </Card>
+            
+            {/* Gerenciador de Armazenamento */}
+            <Card className="bg-zinc-950/40 backdrop-blur-md border-zinc-800/50 shadow-xl hover:border-primary/30 transition-all group">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium text-zinc-400 group-hover:text-zinc-300 transition-colors">Armazenamento (R2)</CardTitle>
+                <div className="p-2 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
+                  <FolderOpen className="h-4 w-4 text-primary" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-white">
+                  {(data.stats.totalBytes / (1024 * 1024 * 1024)).toFixed(2)} GB
+                </div>
+                <div className="mt-2 text-xs text-zinc-500">
+                  de 10 GB livres do limite gratuito
+                </div>
+                <div className="mt-3 h-2 w-full bg-zinc-800 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-primary transition-all duration-500" 
+                    style={{ width: `${Math.min((data.stats.totalBytes / (10 * 1024 * 1024 * 1024)) * 100, 100)}%` }} 
+                  />
+                </div>
               </CardContent>
             </Card>
           </div>

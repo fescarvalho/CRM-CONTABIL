@@ -44,6 +44,38 @@ export async function criarPasta(formData: FormData) {
   revalidatePath(`/empresas/${empresaId}`)
 }
 
+export async function renamePasta(formData: FormData) {
+  const id = formData.get('id') as string
+  const nome = formData.get('nome') as string
+  const empresaId = formData.get('empresaId') as string
+  
+  await checkAccess(empresaId)
+
+  await prisma.pasta.update({
+    where: { id },
+    data: { nome }
+  })
+
+  revalidatePath(`/empresas/${empresaId}`)
+}
+
+export async function moverDocumento(formData: FormData) {
+  const id = formData.get('id') as string
+  const empresaId = formData.get('empresaId') as string
+  const pastaId = formData.get('pastaId') as string
+  
+  await checkAccess(empresaId)
+
+  await prisma.documento.update({
+    where: { id },
+    data: {
+      pastaId: pastaId === 'root' ? null : pastaId
+    }
+  })
+
+  revalidatePath(`/empresas/${empresaId}`)
+}
+
 export async function uploadDocumento(formData: FormData) {
   const files = formData.getAll('file') as File[]
   const empresaId = formData.get('empresaId') as string
