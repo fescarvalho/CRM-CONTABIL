@@ -113,7 +113,7 @@ export function DocumentosListClient({
       {!isLixeira && selectedIds.length > 0 && (
         <div className="bg-primary/10 border-b border-primary/20 p-2 flex items-center justify-between">
           <span className="text-sm font-medium text-primary px-2">{selectedIds.length} selecionado(s)</span>
-          <MoverEmMassaModal empresaId={empresaId} docIds={selectedIds} pastas={todasPastas} onComplete={() => setSelectedIds([])} />
+          <MoverEmMassaModal empresaId={empresaId} docIds={selectedIds} pastas={todasPastas} onSuccess={() => setSelectedIds([])} />
         </div>
       )}
 
