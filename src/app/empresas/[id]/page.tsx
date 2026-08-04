@@ -29,6 +29,29 @@ export default async function FileManagerPage({
   const { folder: currentFolderId, q: searchQuery, sort: sortQuery } = await searchParams
 
   const supabase = await createClient()
+
+  // 1. Iniciamos as queries de dados em paralelo ANTES da validação de acesso
+  // Isso economiza centenas de milissegundos de "cachoeira" (waterfall) no banco de dados
+  const isGlobalSearch = !!searchQuery
+  let docWhere: any = { empresaId }
+  if (isGlobalSearch) {
+    docWhere.nome = { contains: searchQuery, mode: 'insensitive' }
+  } else {
+    docWhere.pastaId = currentFolderId || null
+  }
+
+  let orderBy: any = { nome: 'asc' }
+  if (sortQuery === 'name_desc') orderBy = { nome: 'desc' }
+  else if (sortQuery === 'date_desc') orderBy = { criadoEm: 'desc' }
+  else if (sortQuery === 'date_asc') orderBy = { criadoEm: 'asc' }
+  else if (sortQuery === 'size_desc') orderBy = { tamanhoBytes: 'desc' }
+  else if (sortQuery === 'size_asc') orderBy = { tamanhoBytes: 'asc' }
+
+  const empresaPromise = prisma.empresa.findUnique({ where: { id: empresaId } })
+  const todasPastasPromise = prisma.pasta.findMany({ where: { empresaId } })
+  const documentosPromise = prisma.documento.findMany({ where: docWhere, orderBy })
+
+  // 2. Enquanto os dados baixam, validamos a autenticação (também toma tempo)
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
@@ -42,40 +65,18 @@ export default async function FileManagerPage({
     if (!acesso) redirect('/')
   }
 
-  const empresa = await prisma.empresa.findUnique({ where: { id: empresaId } })
+  // 3. Agora aguardamos os dados terminarem de chegar (provavelmente já terminaram)
+  const [empresa, todasPastas, documentos] = await Promise.all([
+    empresaPromise,
+    todasPastasPromise,
+    documentosPromise
+  ])
+
   if (!empresa) return <div>Empresa não encontrada</div>
 
-  // Busca a lista completa de pastas da empresa para o modal de mover
-  const todasPastas = await prisma.pasta.findMany({
-    where: { empresaId }
-  })
-
-  // Pastas da view atual
-  const isGlobalSearch = !!searchQuery
   const pastas = isGlobalSearch 
     ? todasPastas.filter(p => p.nome.toLowerCase().includes(searchQuery.toLowerCase())).sort((a, b) => a.nome.localeCompare(b.nome))
     : todasPastas.filter(p => p.parentId === (currentFolderId || null)).sort((a, b) => a.nome.localeCompare(b.nome))
-
-  // Configuração da Ordenação
-  let orderBy: any = { nome: 'asc' }
-  if (sortQuery === 'name_desc') orderBy = { nome: 'desc' }
-  else if (sortQuery === 'date_desc') orderBy = { criadoEm: 'desc' }
-  else if (sortQuery === 'date_asc') orderBy = { criadoEm: 'asc' }
-  else if (sortQuery === 'size_desc') orderBy = { tamanhoBytes: 'desc' }
-  else if (sortQuery === 'size_asc') orderBy = { tamanhoBytes: 'asc' }
-
-  // Configuração do Filtro
-  let docWhere: any = { empresaId }
-  if (isGlobalSearch) {
-    docWhere.nome = { contains: searchQuery, mode: 'insensitive' }
-  } else {
-    docWhere.pastaId = currentFolderId || null
-  }
-
-  const documentos = await prisma.documento.findMany({
-    where: docWhere,
-    orderBy
-  })
 
   // Breadcrumb
   let breadcrumbs: { id: string, nome: string }[] = []
