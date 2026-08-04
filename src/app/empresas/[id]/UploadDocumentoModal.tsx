@@ -114,7 +114,7 @@ export function UploadDocumentoModal({ empresaId, pastaId }: UploadModalProps) {
       }>
         Upload
       </DialogTrigger>
-      <DialogContent className="bg-zinc-950/90 backdrop-blur-xl border-zinc-800 text-white">
+      <DialogContent className="sm:max-w-2xl bg-zinc-950/90 backdrop-blur-xl border-zinc-800 text-white">
         <DialogHeader>
           <DialogTitle className="text-xl">Upload de Documentos</DialogTitle>
         </DialogHeader>
@@ -148,14 +148,14 @@ export function UploadDocumentoModal({ empresaId, pastaId }: UploadModalProps) {
               <p className="text-xs text-zinc-500 uppercase font-bold tracking-wider">Arquivos Selecionados ({files.length}):</p>
               {files.map((f, idx) => (
                 <div key={idx} className="flex items-center justify-between p-2 rounded bg-zinc-900/50 border border-zinc-800">
-                  <div className="flex items-center gap-3 overflow-hidden">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
                     <FileIcon className="w-4 h-4 text-red-500 flex-shrink-0" />
-                    <div className="truncate">
+                    <div className="flex-1 min-w-0">
                       <div className="text-sm text-zinc-300 truncate">{f.name}</div>
                       {f.webkitRelativePath && <div className="text-xs text-zinc-500 truncate">{f.webkitRelativePath}</div>}
                     </div>
                   </div>
-                  <Button type="button" variant="ghost" size="icon-sm" className="text-zinc-500 hover:text-red-400 h-6 w-6 ml-2" onClick={() => removeFile(idx)} disabled={isPending}>
+                  <Button type="button" variant="ghost" size="icon-sm" className="text-zinc-500 hover:text-red-400 h-6 w-6 ml-2 flex-shrink-0" onClick={() => removeFile(idx)} disabled={isPending}>
                     <X className="w-4 h-4" />
                   </Button>
                 </div>
