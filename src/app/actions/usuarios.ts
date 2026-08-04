@@ -71,3 +71,32 @@ export async function criarUsuarioAdmin(formData: FormData) {
 
   revalidatePath('/usuarios')
 }
+
+export async function atribuirEmpresas(formData: FormData) {
+  await checkAdmin()
+  
+  const usuarioId = formData.get('usuarioId') as string
+  const empresaIds = formData.getAll('empresaIds') as string[]
+  
+  if (!usuarioId) throw new Error('Usuário inválido')
+
+  // Executa uma transação: deleta acessos antigos e insere os novos
+  await prisma.$transaction(async (tx) => {
+    // 1. Limpa acessos atuais
+    await tx.acessoEmpresa.deleteMany({
+      where: { usuarioId }
+    })
+    
+    // 2. Insere novos acessos
+    if (empresaIds.length > 0) {
+      await tx.acessoEmpresa.createMany({
+        data: empresaIds.map(empId => ({
+          usuarioId,
+          empresaId: empId
+        }))
+      })
+    }
+  })
+
+  revalidatePath('/usuarios')
+}

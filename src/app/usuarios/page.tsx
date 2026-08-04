@@ -5,12 +5,19 @@ import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { AddUsuarioModal } from './AddUsuarioModal'
+import { AtribuirEmpresasModal } from './AtribuirEmpresasModal'
+import prisma from '@/lib/prisma'
 
 export default async function UsuariosPage() {
   let usuarios: any[] = []
+  let todasEmpresas: any[] = []
 
   try {
     usuarios = await getTodosUsuarios()
+    todasEmpresas = await prisma.empresa.findMany({
+      orderBy: { razaoSocial: 'asc' },
+      select: { id: true, razaoSocial: true, cnpj: true }
+    })
   } catch (err) {
     console.error("Erro ao carregar usuários:", err)
     return (
@@ -78,18 +85,29 @@ export default async function UsuariosPage() {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <div className="flex gap-2 flex-wrap">
-                      {usuario.role === 'ADMIN' ? (
-                        <span className="text-zinc-500 text-sm">Todas (Admin)</span>
-                      ) : (
-                        usuario.empresasAtribuidas?.map((a: any) => (
-                          <Badge key={a.empresaId} variant="outline" className="border-zinc-700 text-zinc-300 bg-zinc-900/50">
-                            {a.empresa.razaoSocial}
-                          </Badge>
-                        ))
-                      )}
-                      {usuario.role !== 'ADMIN' && (!usuario.empresasAtribuidas || usuario.empresasAtribuidas.length === 0) && (
-                        <span className="text-zinc-600 text-sm italic">Nenhum</span>
+                    <div className="flex items-center justify-between flex-wrap gap-2">
+                      <div className="flex gap-2 flex-wrap flex-1">
+                        {usuario.role === 'ADMIN' ? (
+                          <span className="text-zinc-500 text-sm">Todas (Admin)</span>
+                        ) : (
+                          usuario.empresasAtribuidas?.map((a: any) => (
+                            <Badge key={a.empresaId} variant="outline" className="border-zinc-700 text-zinc-300 bg-zinc-900/50">
+                              {a.empresa.razaoSocial}
+                            </Badge>
+                          ))
+                        )}
+                        {usuario.role !== 'ADMIN' && (!usuario.empresasAtribuidas || usuario.empresasAtribuidas.length === 0) && (
+                          <span className="text-zinc-600 text-sm italic">Nenhum</span>
+                        )}
+                      </div>
+                      
+                      {usuario.role !== 'ADMIN' && (
+                        <AtribuirEmpresasModal 
+                          usuarioId={usuario.id} 
+                          usuarioNome={usuario.nome} 
+                          todasEmpresas={todasEmpresas} 
+                          empresasAtribuidasIds={usuario.empresasAtribuidas?.map((a: any) => a.empresaId) || []} 
+                        />
                       )}
                     </div>
                   </TableCell>
