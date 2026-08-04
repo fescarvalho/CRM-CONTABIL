@@ -36,7 +36,7 @@ export function UploadDocumentoModal({ empresaId, pastaId }: UploadModalProps) {
 
   const handleAction = async () => {
     if (files.length === 0) {
-      setError('Selecione ao menos um arquivo PDF.')
+      setError('Selecione ao menos um arquivo.')
       return
     }
 

@@ -18,6 +18,7 @@ export function DocumentPreviewModal({ empresaId, nome, urlStorage }: Props) {
   const [loading, setLoading] = useState(false)
 
   const isImage = nome.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp)$/i)
+  const isOffice = nome.toLowerCase().match(/\.(doc|docx|xls|xlsx|ppt|pptx)$/i)
 
   const handleOpen = async (isOpen: boolean) => {
     setOpen(isOpen)
@@ -54,6 +55,8 @@ export function DocumentPreviewModal({ empresaId, nome, urlStorage }: Props) {
           ) : url ? (
             isImage ? (
               <img src={url} alt={nome} className="max-w-full max-h-full object-contain rounded-lg shadow-2xl" />
+            ) : isOffice ? (
+              <iframe src={`https://docs.google.com/gview?url=${encodeURIComponent(url)}&embedded=true`} className="w-full h-full rounded-lg bg-white" title={nome} />
             ) : (
               <iframe src={url} className="w-full h-full rounded-lg bg-white" title={nome} />
             )
