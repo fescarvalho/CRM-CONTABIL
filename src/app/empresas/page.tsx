@@ -7,15 +7,57 @@ import Link from 'next/link'
 import { AcessosModal } from './AcessosModal'
 import { EmpresaFormModal } from './EmpresaFormModal'
 import { formatCNPJ } from '@/lib/utils'
+import { prisma } from '@/lib/prisma'
+import { createClient } from '@/lib/supabase/server'
+import { redirect } from 'next/navigation'
+import { EmpresaFilters } from './EmpresaFilters'
 
-export default async function EmpresasPage() {
+export default async function EmpresasPage({
+  searchParams
+}: {
+  searchParams: Promise<{ q?: string }>
+}) {
+  const { q } = await searchParams
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    redirect('/login')
+  }
+
+  const dbUser = await prisma.usuario.findUnique({ where: { email: user.email as string } })
+  if (!dbUser) redirect('/login')
+
+  const isGlobalSearch = !!q
+  let whereClause: any = {}
+  if (isGlobalSearch) {
+    whereClause = {
+      OR: [
+        { razaoSocial: { contains: q, mode: 'insensitive' } },
+        { cnpj: { contains: q, mode: 'insensitive' } }
+      ]
+    }
+  }
+
+  // Se não for admin, filtra pelas empresas que tem acesso
+  if (dbUser.role !== 'ADMIN') {
+    whereClause = {
+      ...whereClause,
+      acessos: { some: { usuarioId: dbUser.id } }
+    }
+  }
+
   let empresas = []
   let usuarios = []
 
   try {
     const data = await Promise.all([
-      getEmpresas(),
-      getUsuarios()
+      prisma.empresa.findMany({ 
+        where: whereClause,
+        include: { acessos: { include: { usuario: true } } },
+        orderBy: { razaoSocial: 'asc' } 
+      }),
+      prisma.usuario.findMany()
     ])
     empresas = data[0]
     usuarios = data[1]
@@ -54,6 +96,8 @@ export default async function EmpresasPage() {
           
           <EmpresaFormModal />
         </div>
+
+        <EmpresaFilters />
 
         <div className="border border-zinc-800/50 rounded-2xl bg-zinc-950/40 backdrop-blur-md overflow-hidden shadow-xl">
           <Table>

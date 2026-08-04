@@ -15,6 +15,7 @@ import { DocumentosListClient } from './DocumentosListClient'
 import { FileFilters } from './FileFilters'
 import { DeleteFolderButton } from './DeleteFolderButton'
 import { formatCNPJ } from '@/lib/utils'
+import { MoverPastaModal } from './MoverPastaModal'
 
 export default async function FileManagerPage({
   params,
@@ -48,10 +49,10 @@ export default async function FileManagerPage({
     where: { empresaId }
   })
 
-  // Pastas da view atual (oculta as pastas se estiver numa busca global)
+  // Pastas da view atual
   const isGlobalSearch = !!searchQuery
   const pastas = isGlobalSearch 
-    ? [] 
+    ? todasPastas.filter(p => p.nome.toLowerCase().includes(searchQuery.toLowerCase())).sort((a, b) => a.nome.localeCompare(b.nome))
     : todasPastas.filter(p => p.parentId === (currentFolderId || null)).sort((a, b) => a.nome.localeCompare(b.nome))
 
   // Configuração da Ordenação
@@ -124,6 +125,8 @@ export default async function FileManagerPage({
           </div>
         </div>
 
+        <FileFilters />
+
         <div className="border rounded-lg bg-card">
           {pastas.length === 0 && documentos.length === 0 ? (
             <div className="p-8 text-center text-muted-foreground">
@@ -138,6 +141,11 @@ export default async function FileManagerPage({
                     <span className="font-medium">{pasta.nome}</span>
                   </Link>
                   <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <MoverPastaModal 
+                      empresaId={empresaId} 
+                      pastaId={pasta.id} 
+                      pastas={todasPastas.map(p => ({ id: p.id, nome: p.nome, parentId: p.parentId }))} 
+                    />
                     <RenomearPastaModal empresaId={empresaId} pasta={pasta} />
                     <form action={excluirPasta}>
                       <input type="hidden" name="id" value={pasta.id} />
@@ -149,8 +157,6 @@ export default async function FileManagerPage({
               ))}
             </div>
           )}
-          
-          <FileFilters />
           
           <DocumentosListClient 
             empresaId={empresaId}

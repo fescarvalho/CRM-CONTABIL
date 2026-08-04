@@ -28,25 +28,24 @@ export function FileFilters() {
   }, [pathname, router, searchParams])
 
   return (
-    <div className="flex flex-col sm:flex-row gap-4 mb-4">
-      <div className="relative flex-1">
+    <div className="flex flex-col sm:flex-row gap-3 mb-6 items-center">
+      <div className="relative flex-1 w-full max-w-md">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
         <Input 
-          placeholder="Pesquisar arquivos em toda a empresa..." 
-          className="pl-9 bg-zinc-900 border-zinc-800 text-white w-full"
+          placeholder="Pesquisar pastas e arquivos em toda a empresa..." 
+          className="h-9 pl-9 bg-zinc-900/50 border-zinc-800/80 text-white w-full rounded-full shadow-inner focus-visible:ring-primary/30 transition-all hover:bg-zinc-900 text-sm"
           defaultValue={currentSearch}
           onChange={(e) => {
-            // Debounce simples para a busca
             const timeoutId = setTimeout(() => {
               updateFilters('q', e.target.value)
-            }, 500)
+            }, 300)
             return () => clearTimeout(timeoutId)
           }}
         />
       </div>
       
       <select 
-        className="h-10 px-3 rounded-md bg-zinc-900 border border-zinc-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 text-white text-sm"
+        className="h-9 px-3 py-0 rounded-full bg-zinc-900/50 border border-zinc-800/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 text-white text-sm transition-all hover:bg-zinc-900 cursor-pointer"
         value={currentSort}
         onChange={(e) => updateFilters('sort', e.target.value)}
       >

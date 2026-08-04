@@ -137,6 +137,23 @@ export async function excluirPasta(formData: FormData) {
   revalidatePath(`/empresas/${empresaId}`)
 }
 
+export async function moverPasta(formData: FormData) {
+  const id = formData.get('id') as string
+  const empresaId = formData.get('empresaId') as string
+  const parentId = formData.get('parentId') as string
+  
+  await checkAccess(empresaId)
+
+  await prisma.pasta.update({
+    where: { id },
+    data: {
+      parentId: parentId === 'root' ? null : parentId
+    }
+  })
+
+  revalidatePath(`/empresas/${empresaId}`)
+}
+
 export async function moverDocumentosEmMassa(formData: FormData) {
   const empresaId = formData.get('empresaId') as string
   const pastaId = formData.get('pastaId') as string
