@@ -40,7 +40,7 @@ export function DocumentPreviewModal({ empresaId, nome, urlStorage }: Props) {
         <Eye className="w-4 h-4" />
       </DialogTrigger>
       
-      <DialogContent className="max-w-5xl w-[90vw] h-[90vh] flex flex-col p-0 bg-zinc-950 border-zinc-800">
+      <DialogContent className="sm:max-w-[95vw] w-[95vw] h-[95vh] flex flex-col p-0 bg-zinc-950 border-zinc-800">
         <DialogHeader className="p-4 border-b border-zinc-800 bg-zinc-900/50">
           <DialogTitle className="text-zinc-100">{nome}</DialogTitle>
         </DialogHeader>
