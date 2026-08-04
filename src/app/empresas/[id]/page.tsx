@@ -12,6 +12,7 @@ import { UploadDocumentoModal } from './UploadDocumentoModal'
 import { RenomearPastaModal } from './RenomearPastaModal'
 import { CriarPastaModal } from './CriarPastaModal'
 import { DocumentosListClient } from './DocumentosListClient'
+import { FileFilters } from './FileFilters'
 import { DeleteFolderButton } from './DeleteFolderButton'
 import { formatCNPJ } from '@/lib/utils'
 
@@ -20,10 +21,10 @@ export default async function FileManagerPage({
   searchParams
 }: {
   params: Promise<{ id: string }>
-  searchParams: Promise<{ folder?: string }>
+  searchParams: Promise<{ folder?: string, q?: string, sort?: string }>
 }) {
   const { id: empresaId } = await params
-  const { folder: currentFolderId } = await searchParams
+  const { folder: currentFolderId, q: searchQuery, sort: sortQuery } = await searchParams
 
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -47,12 +48,31 @@ export default async function FileManagerPage({
     where: { empresaId }
   })
 
-  // Busca pastas e documentos da pasta atual
-  const pastas = todasPastas.filter(p => p.parentId === (currentFolderId || null)).sort((a, b) => a.nome.localeCompare(b.nome))
+  // Pastas da view atual (oculta as pastas se estiver numa busca global)
+  const isGlobalSearch = !!searchQuery
+  const pastas = isGlobalSearch 
+    ? [] 
+    : todasPastas.filter(p => p.parentId === (currentFolderId || null)).sort((a, b) => a.nome.localeCompare(b.nome))
+
+  // Configuração da Ordenação
+  let orderBy: any = { nome: 'asc' }
+  if (sortQuery === 'name_desc') orderBy = { nome: 'desc' }
+  else if (sortQuery === 'date_desc') orderBy = { criadoEm: 'desc' }
+  else if (sortQuery === 'date_asc') orderBy = { criadoEm: 'asc' }
+  else if (sortQuery === 'size_desc') orderBy = { tamanhoBytes: 'desc' }
+  else if (sortQuery === 'size_asc') orderBy = { tamanhoBytes: 'asc' }
+
+  // Configuração do Filtro
+  let docWhere: any = { empresaId }
+  if (isGlobalSearch) {
+    docWhere.nome = { contains: searchQuery, mode: 'insensitive' }
+  } else {
+    docWhere.pastaId = currentFolderId || null
+  }
 
   const documentos = await prisma.documento.findMany({
-    where: { empresaId, pastaId: currentFolderId || null },
-    orderBy: { nome: 'asc' }
+    where: docWhere,
+    orderBy
   })
 
   // Breadcrumb
@@ -130,6 +150,8 @@ export default async function FileManagerPage({
             </div>
           )}
           
+          <FileFilters />
+          
           <DocumentosListClient 
             empresaId={empresaId}
             documentos={documentos.map(d => ({
@@ -137,7 +159,9 @@ export default async function FileManagerPage({
               nome: d.nome,
               urlStorage: d.urlStorage,
               tamanhoBytes: d.tamanhoBytes,
-              pastaId: d.pastaId
+              pastaId: d.pastaId,
+              criadoEm: d.criadoEm.toISOString(),
+              pastaNome: isGlobalSearch && d.pastaId ? todasPastas.find(p => p.id === d.pastaId)?.nome : undefined
             }))}
             todasPastas={todasPastas.map(p => ({
               id: p.id,

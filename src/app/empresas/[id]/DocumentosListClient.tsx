@@ -13,6 +13,8 @@ type Documento = {
   urlStorage: string
   tamanhoBytes: number
   pastaId: string | null
+  criadoEm: string
+  pastaNome?: string
 }
 
 type Pasta = {
@@ -49,7 +51,11 @@ export function DocumentosListClient({ empresaId, documentos, todasPastas }: Pro
     window.location.href = url
   }
 
-  if (documentos.length === 0) return null
+  if (documentos.length === 0) return (
+    <div className="p-8 text-center text-muted-foreground">
+      Nenhum arquivo encontrado.
+    </div>
+  )
 
   return (
     <div className="flex flex-col">
@@ -82,30 +88,46 @@ export function DocumentosListClient({ empresaId, documentos, todasPastas }: Pro
             <Square className="w-5 h-5" />
           )}
         </button>
-        <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Nome</span>
+        <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider flex-1">Nome</span>
+        <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider w-32 hidden md:block">Tamanho</span>
+        <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider w-32 hidden md:block text-right pr-4">Data</span>
       </div>
 
       {/* Lista de Documentos */}
-      {documentos.map(doc => {
-        const isSelected = selectedIds.includes(doc.id)
-        return (
-          <div 
-            key={doc.id} 
-            className={`flex items-center justify-between p-4 transition-colors ${isSelected ? 'bg-primary/5' : 'hover:bg-muted/50'}`}
-          >
-            <div className="flex items-center gap-3 flex-1 overflow-hidden">
-              <button onClick={() => toggleSelection(doc.id)} className="text-zinc-500 hover:text-primary transition-colors focus:outline-none">
-                {isSelected ? <CheckSquare className="w-5 h-5 text-primary" /> : <Square className="w-5 h-5" />}
-              </button>
-              
-              <FileIcon className="w-5 h-5 text-red-500 flex-shrink-0" />
-              <div className="truncate pr-4">
-                <div className="font-medium truncate text-white">{doc.nome}</div>
-                <div className="text-xs text-muted-foreground">{(doc.tamanhoBytes / 1024).toFixed(2)} KB</div>
+      <div className="divide-y divide-zinc-800/50">
+        {documentos.map(doc => {
+          const isSelected = selectedIds.includes(doc.id)
+          return (
+            <div 
+              key={doc.id} 
+              className={`flex items-center justify-between p-4 transition-colors ${isSelected ? 'bg-primary/5' : 'hover:bg-muted/50'}`}
+            >
+              <div className="flex items-center gap-3 flex-1 overflow-hidden">
+                <button onClick={() => toggleSelection(doc.id)} className="text-zinc-500 hover:text-primary transition-colors focus:outline-none">
+                  {isSelected ? <CheckSquare className="w-5 h-5 text-primary" /> : <Square className="w-5 h-5" />}
+                </button>
+                
+                <FileIcon className="w-5 h-5 text-red-500 flex-shrink-0" />
+                <div className="truncate pr-4 flex-1">
+                  <div className="font-medium truncate text-white">{doc.nome}</div>
+                  <div className="text-xs text-muted-foreground flex items-center gap-2">
+                    {doc.pastaNome && (
+                      <span className="bg-zinc-800 px-2 py-0.5 rounded text-zinc-300">Em: {doc.pastaNome}</span>
+                    )}
+                    <span className="md:hidden">{(doc.tamanhoBytes / 1024).toFixed(2)} KB</span>
+                  </div>
+                </div>
               </div>
-            </div>
-            
-            <div className="flex items-center gap-1">
+              
+              <div className="w-32 hidden md:block text-sm text-zinc-400">
+                {(doc.tamanhoBytes / 1024).toFixed(2)} KB
+              </div>
+              
+              <div className="w-32 hidden md:block text-sm text-zinc-400 text-right pr-4">
+                {new Date(doc.criadoEm).toLocaleDateString('pt-BR')}
+              </div>
+              
+              <div className="flex items-center gap-1">
               <MoverDocumentoModal 
                 empresaId={empresaId} 
                 documentoId={doc.id} 
