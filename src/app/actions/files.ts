@@ -76,6 +76,43 @@ export async function moverDocumento(formData: FormData) {
   revalidatePath(`/empresas/${empresaId}`)
 }
 
+export async function excluirPasta(formData: FormData) {
+  const id = formData.get('id') as string
+  const empresaId = formData.get('empresaId') as string
+  
+  await checkAccess(empresaId)
+
+  // Devido ao onDelete: SetNull no Documento e onDelete: Cascade na Pasta (subpastas),
+  // apagar a pasta manterá os documentos, movendo-os para a raiz automaticamente.
+  await prisma.pasta.delete({
+    where: { id }
+  })
+
+  revalidatePath(`/empresas/${empresaId}`)
+}
+
+export async function moverDocumentosEmMassa(formData: FormData) {
+  const empresaId = formData.get('empresaId') as string
+  const pastaId = formData.get('pastaId') as string
+  const docIds = formData.getAll('docIds') as string[]
+  
+  await checkAccess(empresaId)
+
+  if (docIds.length > 0) {
+    await prisma.documento.updateMany({
+      where: { 
+        id: { in: docIds },
+        empresaId // Segurança extra
+      },
+      data: {
+        pastaId: pastaId === 'root' ? null : pastaId
+      }
+    })
+  }
+
+  revalidatePath(`/empresas/${empresaId}`)
+}
+
 export async function uploadDocumento(formData: FormData) {
   const files = formData.getAll('file') as File[]
   const empresaId = formData.get('empresaId') as string

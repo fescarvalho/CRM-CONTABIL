@@ -6,11 +6,11 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { criarPasta, excluirDocumento, getSignedDownloadUrl } from '@/app/actions/files'
+import { criarPasta, excluirPasta } from '@/app/actions/files'
 import Link from 'next/link'
 import { UploadDocumentoModal } from './UploadDocumentoModal'
 import { RenomearPastaModal } from './RenomearPastaModal'
-import { MoverDocumentoModal } from './MoverDocumentoModal'
+import { DocumentosListClient } from './DocumentosListClient'
 import { formatCNPJ } from '@/lib/utils'
 
 export default async function FileManagerPage({
@@ -127,47 +127,21 @@ export default async function FileManagerPage({
           ) : (
             <div className="divide-y">
               {pastas.map(pasta => (
-                <div key={pasta.id} className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors">
+                <div key={pasta.id} className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors group">
                   <Link href={`/empresas/${empresaId}?folder=${pasta.id}`} className="flex items-center gap-3 flex-1">
                     <Folder className="w-5 h-5 text-blue-500" />
                     <span className="font-medium">{pasta.nome}</span>
                   </Link>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                     <RenomearPastaModal empresaId={empresaId} pasta={pasta} />
-                  </div>
-                </div>
-              ))}
-              
-              {documentos.map(doc => (
-                <div key={doc.id} className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors">
-                  <div className="flex items-center gap-3 flex-1">
-                    <FileIcon className="w-5 h-5 text-red-500" />
-                    <div>
-                      <div className="font-medium">{doc.nome}</div>
-                      <div className="text-xs text-muted-foreground">{(doc.tamanhoBytes / 1024).toFixed(2)} KB</div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <MoverDocumentoModal 
-                      empresaId={empresaId} 
-                      documentoId={doc.id} 
-                      currentPastaId={doc.pastaId} 
-                      pastas={todasPastas} 
-                    />
-                    <form action={async () => {
-                      'use server'
-                      const url = await getSignedDownloadUrl(empresaId, doc.urlStorage)
-                      redirect(url)
-                    }}>
-                      <Button variant="ghost" size="icon" type="submit" title="Baixar" className="text-zinc-500 hover:text-green-500 transition-colors">
-                        <Download className="w-4 h-4" />
-                      </Button>
-                    </form>
-                    <form action={excluirDocumento}>
-                      <input type="hidden" name="id" value={doc.id} />
+                    <form action={excluirPasta}>
+                      <input type="hidden" name="id" value={pasta.id} />
                       <input type="hidden" name="empresaId" value={empresaId} />
-                      <input type="hidden" name="urlStorage" value={doc.urlStorage} />
-                      <Button variant="ghost" size="icon" type="submit" className="text-zinc-500 hover:text-red-500 transition-colors">
+                      <Button variant="ghost" size="icon" type="submit" title="Excluir Pasta" className="text-zinc-500 hover:text-red-500 transition-colors" onClick={(e) => {
+                        if (!confirm('Tem certeza que deseja excluir esta pasta? Os arquivos dentro dela NÃO serão apagados, mas voltarão para a raiz da empresa.')) {
+                          e.preventDefault()
+                        }
+                      }}>
                         <Trash2 className="w-4 h-4" />
                       </Button>
                     </form>
@@ -176,6 +150,12 @@ export default async function FileManagerPage({
               ))}
             </div>
           )}
+          
+          <DocumentosListClient 
+            empresaId={empresaId}
+            documentos={documentos}
+            todasPastas={todasPastas}
+          />
         </div>
       </div>
     </div>
