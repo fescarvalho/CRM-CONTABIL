@@ -24,15 +24,8 @@ export function UploadDocumentoModal({ empresaId, pastaId }: UploadModalProps) {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const selectedFiles = Array.from(e.target.files)
-      const pdfs = selectedFiles.filter(f => f.type === 'application/pdf')
       
-      if (pdfs.length < selectedFiles.length) {
-        setError('Alguns arquivos não são PDF e foram ignorados.')
-      } else {
-        setError('')
-      }
-
-      setFiles(prev => [...prev, ...pdfs])
+      setFiles(prev => [...prev, ...selectedFiles])
       e.target.value = ''
     }
   }
@@ -131,9 +124,9 @@ export function UploadDocumentoModal({ empresaId, pastaId }: UploadModalProps) {
             <div>
               <Label htmlFor="fileInput" className="cursor-pointer flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-zinc-700 rounded-lg hover:border-primary/50 hover:bg-primary/5 transition-colors">
                 <Upload className="w-6 h-6 text-zinc-500 mb-1" />
-                <span className="text-zinc-400 text-xs font-semibold">Selecionar PDFs</span>
+                <span className="text-zinc-400 text-xs font-semibold">Selecionar Arquivos</span>
               </Label>
-              <Input id="fileInput" type="file" accept="application/pdf" multiple className="hidden" onChange={handleFileChange} />
+              <Input id="fileInput" type="file" multiple className="hidden" onChange={handleFileChange} />
             </div>
             
             <div>

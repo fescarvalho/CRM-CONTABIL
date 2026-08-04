@@ -176,24 +176,19 @@ export async function uploadDocumento(formData: FormData) {
     throw new Error('Você pode enviar no máximo 10 arquivos por vez')
   }
 
-  for (const file of validFiles) {
-    if (file.type !== 'application/pdf') {
-      throw new Error(`O arquivo ${file.name} não é um PDF válido`)
-    }
-  }
-
   await Promise.all(validFiles.map(async (file) => {
     const bytes = await file.arrayBuffer()
     const buffer = Buffer.from(bytes)
 
     const docId = crypto.randomUUID()
-    const urlStorage = `${empresaId}/${pastaId || 'raiz'}/${docId}.pdf`
+    const extension = file.name.split('.').pop()
+    const urlStorage = `${empresaId}/${pastaId || 'raiz'}/${docId}.${extension}`
 
     await r2.send(new PutObjectCommand({
       Bucket: BUCKET_NAME,
       Key: urlStorage,
       Body: buffer,
-      ContentType: file.type
+      ContentType: file.type || 'application/octet-stream'
     }))
 
     await prisma.documento.create({
