@@ -1,8 +1,14 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // @ts-ignore
   serverActions: {
     bodySizeLimit: '50mb'
+  },
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '50mb'
+    }
   }
 };
 
