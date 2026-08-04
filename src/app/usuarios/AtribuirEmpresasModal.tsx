@@ -70,10 +70,8 @@ export function AtribuirEmpresasModal({ usuarioId, usuarioNome, todasEmpresas, e
         setBusca('')
       }
     }}>
-      <DialogTrigger asChild>
-        <Button variant="ghost" size="sm" className="text-zinc-400 hover:text-primary hover:bg-primary/10 ml-2">
-          <Settings2 className="w-4 h-4 mr-2" /> Gerenciar Acessos
-        </Button>
+      <DialogTrigger className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 h-9 px-3 hover:bg-primary/10 text-zinc-400 hover:text-primary ml-2">
+        <Settings2 className="w-4 h-4 mr-2" /> Gerenciar Acessos
       </DialogTrigger>
       
       <DialogContent className="max-w-2xl bg-zinc-950/95 backdrop-blur-xl border-zinc-800 text-white">
