@@ -1,13 +1,14 @@
 'use client'
 
 import { useState } from 'react'
-import { Folder, CheckSquare, Square } from 'lucide-react'
+import { Folder, CheckSquare, Square, Trash2, RotateCcw } from 'lucide-react'
 import Link from 'next/link'
 import { MoverPastaModal } from './MoverPastaModal'
 import { RenomearPastaModal } from './RenomearPastaModal'
 import { DeleteFolderButton } from './DeleteFolderButton'
 import { MoverPastasEmMassaModal } from './MoverPastasEmMassaModal'
-import { excluirPasta } from '@/app/actions/files'
+import { excluirPasta, restaurarPasta, excluirPastaPermanente } from '@/app/actions/files'
+import { Button } from '@/components/ui/button'
 
 type Pasta = {
   id: string
@@ -20,13 +21,35 @@ type Props = {
   pastas: Pasta[]
   todasPastas: Pasta[]
   hasDocumentos: boolean
+  isLixeira?: boolean
 }
 
-export function PastasListClient({ empresaId, pastas, todasPastas, hasDocumentos }: Props) {
+export function PastasListClient({ empresaId, pastas, todasPastas, hasDocumentos, isLixeira }: Props) {
   const [selectedIds, setSelectedIds] = useState<string[]>([])
+  const [loadingId, setLoadingId] = useState<string | null>(null)
+
+  const handleRestaurar = async (id: string) => {
+    if (!confirm('Deseja restaurar esta pasta e seu conteúdo para o local original?')) return
+    setLoadingId(id)
+    try {
+      await restaurarPasta(id, empresaId)
+    } finally {
+      setLoadingId(null)
+    }
+  }
+
+  const handleExcluirPermanente = async (id: string) => {
+    if (!confirm('ATENÇÃO: Isso excluirá permanentemente a pasta. Essa ação não pode ser desfeita. Continuar?')) return
+    setLoadingId(id)
+    try {
+      await excluirPastaPermanente(id, empresaId)
+    } finally {
+      setLoadingId(null)
+    }
+  }
 
   if (pastas.length === 0) {
-    if (!hasDocumentos) {
+    if (!hasDocumentos && !isLixeira) {
       return (
         <div className="p-8 text-center text-muted-foreground">
           Esta pasta está vazia.
@@ -55,7 +78,7 @@ export function PastasListClient({ empresaId, pastas, todasPastas, hasDocumentos
   return (
     <div className="flex flex-col">
       {/* Barra de Ações em Massa */}
-      {selectedIds.length > 0 && (
+      {!isLixeira && selectedIds.length > 0 && (
         <div className="bg-blue-900/20 border-b border-blue-500/20 p-3 flex items-center justify-between animate-in fade-in slide-in-from-top-2">
           <span className="text-sm font-medium text-blue-400">
             {selectedIds.length} {selectedIds.length === 1 ? 'pasta selecionada' : 'pastas selecionadas'}
@@ -76,13 +99,15 @@ export function PastasListClient({ empresaId, pastas, todasPastas, hasDocumentos
 
       {/* Cabeçalho da Lista de Pastas */}
       <div className="flex items-center px-4 py-2 border-b border-zinc-800/50 bg-zinc-900/20">
-        <button onClick={toggleAll} className="mr-3 text-zinc-500 hover:text-blue-400 transition-colors focus:outline-none">
-          {selectedIds.length === pastas.length && pastas.length > 0 ? (
-            <CheckSquare className="w-5 h-5 text-blue-400" />
-          ) : (
-            <Square className="w-5 h-5" />
-          )}
-        </button>
+        {!isLixeira && (
+          <button onClick={toggleAll} className="mr-3 text-zinc-500 hover:text-blue-400 transition-colors focus:outline-none">
+            {selectedIds.length === pastas.length && pastas.length > 0 ? (
+              <CheckSquare className="w-5 h-5 text-blue-400" />
+            ) : (
+              <Square className="w-5 h-5" />
+            )}
+          </button>
+        )}
         <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider flex-1">Pastas</span>
       </div>
 
@@ -103,12 +128,12 @@ export function PastasListClient({ empresaId, pastas, todasPastas, hasDocumentos
                 {isLixeira ? (
                   <div className="flex items-center gap-3">
                     <Folder className="w-5 h-5 text-zinc-500" />
-                    <span className="font-medium truncate">{pasta.nome}</span>
+                    <span className="font-medium truncate text-white">{pasta.nome}</span>
                   </div>
                 ) : (
                   <Link href={`/empresas/${empresaId}?folder=${pasta.id}`} className="flex items-center gap-3 flex-1 overflow-hidden">
                     <Folder className="w-5 h-5 text-blue-500 flex-shrink-0" />
-                    <span className="font-medium truncate">{pasta.nome}</span>
+                    <span className="font-medium truncate text-white">{pasta.nome}</span>
                   </Link>
                 )}
               </div>
