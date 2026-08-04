@@ -1,9 +1,10 @@
 'use client'
 
 import { useState } from 'react'
-import { File as FileIcon, Download, Trash2, CheckSquare, Square, FolderSymlink } from 'lucide-react'
+import { FileText, Download, Trash2, ArrowUpDown, RotateCcw, CheckSquare, Square } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { getSignedDownloadUrl, excluirDocumento } from '@/app/actions/files'
+import { formatBytes } from '@/lib/utils'
+import { getSignedDownloadUrl, excluirDocumento, restaurarDocumento, excluirDocumentoPermanente } from '@/app/actions/files'
 import { MoverDocumentoModal } from './MoverDocumentoModal'
 import { MoverEmMassaModal } from './MoverEmMassaModal'
 import { ShareButton } from './ShareButton'
@@ -19,28 +20,79 @@ type Documento = {
   pastaNome?: string
 }
 
-type Pasta = {
-  id: string
-  nome: string
-  parentId: string | null
-}
-
-type Props = {
+export function DocumentosListClient({
+  empresaId,
+  documentos,
+  todasPastas,
+  isLixeira
+}: {
   empresaId: string
   documentos: Documento[]
-  todasPastas: Pasta[]
-}
-
-export function DocumentosListClient({ empresaId, documentos, todasPastas }: Props) {
+  todasPastas: any[]
+  isLixeira?: boolean
+}) {
+  const [downloadingId, setDownloadingId] = useState<string | null>(null)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
 
-  const toggleSelection = (id: string) => {
-    setSelectedIds(prev => 
-      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
-    )
+  const handleDownload = async (urlStorage: string) => {
+    setDownloadingId(urlStorage)
+    try {
+      const signedUrl = await getSignedDownloadUrl(empresaId, urlStorage)
+      const link = document.createElement('a')
+      link.href = signedUrl
+      link.target = '_blank'
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+    } catch (e) {
+      alert('Erro ao baixar documento')
+    } finally {
+      setDownloadingId(null)
+    }
   }
 
-  const toggleAll = () => {
+  const handleDelete = async (id: string, urlStorage: string) => {
+    if (!confirm('Deseja mover este arquivo para a lixeira?')) return
+    setDeletingId(id)
+    try {
+      const formData = new FormData()
+      formData.append('id', id)
+      formData.append('empresaId', empresaId)
+      formData.append('urlStorage', urlStorage)
+      await excluirDocumento(formData)
+    } catch (e) {
+      alert('Erro ao excluir documento')
+    } finally {
+      setDeletingId(null)
+    }
+  }
+
+  const handleRestaurar = async (id: string) => {
+    if (!confirm('Deseja restaurar este arquivo?')) return
+    setDeletingId(id)
+    try {
+      await restaurarDocumento(id, empresaId)
+    } finally {
+      setDeletingId(null)
+    }
+  }
+
+  const handleExcluirPermanente = async (id: string, urlStorage: string) => {
+    if (!confirm('ATENÇÃO: O arquivo será excluído para sempre. Continuar?')) return
+    setDeletingId(id)
+    try {
+      await excluirDocumentoPermanente(id, empresaId, urlStorage)
+    } finally {
+      setDeletingId(null)
+    }
+  }
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])
+  }
+
+  const toggleSelectAll = () => {
     if (selectedIds.length === documentos.length) {
       setSelectedIds([])
     } else {
@@ -48,117 +100,98 @@ export function DocumentosListClient({ empresaId, documentos, todasPastas }: Pro
     }
   }
 
-  const handleDownload = async (urlStorage: string) => {
-    const url = await getSignedDownloadUrl(empresaId, urlStorage)
-    window.location.href = url
+  if (documentos.length === 0) {
+    return (
+      <div className="p-8 text-center text-zinc-500">
+        Nenhum documento nesta {isLixeira ? 'lixeira' : 'pasta'}.
+      </div>
+    )
   }
 
-  if (documentos.length === 0) return (
-    <div className="p-8 text-center text-muted-foreground">
-      Nenhum arquivo encontrado.
-    </div>
-  )
-
   return (
-    <div className="flex flex-col">
-      {/* Barra de Ações em Massa */}
-      {selectedIds.length > 0 && (
-        <div className="bg-primary/10 border-b border-primary/20 p-3 flex items-center justify-between animate-in fade-in slide-in-from-top-2">
-          <span className="text-sm font-medium text-primary">
-            {selectedIds.length} {selectedIds.length === 1 ? 'arquivo selecionado' : 'arquivos selecionados'}
-          </span>
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" onClick={() => setSelectedIds([])} className="text-zinc-400 hover:text-white">
-              Cancelar
-            </Button>
-            <MoverEmMassaModal 
-              empresaId={empresaId}
-              docIds={selectedIds}
-              pastas={todasPastas}
-              onSuccess={() => setSelectedIds([])}
-            />
-          </div>
+    <div>
+      {!isLixeira && selectedIds.length > 0 && (
+        <div className="bg-primary/10 border-b border-primary/20 p-2 flex items-center justify-between">
+          <span className="text-sm font-medium text-primary px-2">{selectedIds.length} selecionado(s)</span>
+          <MoverEmMassaModal empresaId={empresaId} docIds={selectedIds} pastas={todasPastas} onComplete={() => setSelectedIds([])} />
         </div>
       )}
 
-      {/* Cabeçalho da Lista (Selecionar Tudo) */}
-      <div className="flex items-center px-4 py-2 border-b border-zinc-800/50 bg-zinc-900/20">
-        <button onClick={toggleAll} className="mr-3 text-zinc-500 hover:text-primary transition-colors focus:outline-none">
-          {selectedIds.length === documentos.length && documentos.length > 0 ? (
-            <CheckSquare className="w-5 h-5 text-primary" />
-          ) : (
-            <Square className="w-5 h-5" />
+      <div className="divide-y divide-zinc-800">
+        <div className="flex items-center px-4 py-3 bg-zinc-900/50 text-xs font-medium text-zinc-400 uppercase tracking-wider">
+          {!isLixeira && (
+            <div className="w-8 flex justify-center">
+              <button onClick={toggleSelectAll} className="text-zinc-500 hover:text-primary transition-colors focus:outline-none">
+                {selectedIds.length === documentos.length && documentos.length > 0 ? (
+                  <CheckSquare className="w-5 h-5 text-primary" />
+                ) : (
+                  <Square className="w-5 h-5" />
+                )}
+              </button>
+            </div>
           )}
-        </button>
-        <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider flex-1">Nome</span>
-        <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider w-32 hidden md:block">Tamanho</span>
-        <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider w-32 hidden md:block text-right pr-4">Data</span>
-      </div>
+          <div className="flex-1 flex items-center gap-1 cursor-pointer hover:text-zinc-300">
+            Nome do Arquivo <ArrowUpDown className="w-3 h-3" />
+          </div>
+          <div className="w-32 hidden md:block">Tamanho</div>
+          <div className="w-32 hidden md:block">Data</div>
+          <div className="w-32 text-right">Ações</div>
+        </div>
 
-      {/* Lista de Documentos */}
-      <div className="divide-y divide-zinc-800/50">
-        {documentos.map(doc => {
-          const isSelected = selectedIds.includes(doc.id)
-          return (
-            <div 
-              key={doc.id} 
-              className={`flex items-center justify-between p-4 transition-colors ${isSelected ? 'bg-primary/5' : 'hover:bg-muted/50'}`}
-            >
-              <div className="flex items-center gap-3 flex-1 overflow-hidden">
-                <button onClick={() => toggleSelection(doc.id)} className="text-zinc-500 hover:text-primary transition-colors focus:outline-none">
-                  {isSelected ? <CheckSquare className="w-5 h-5 text-primary" /> : <Square className="w-5 h-5" />}
+        {documentos.map((doc) => (
+          <div key={doc.id} className={`flex items-center px-4 py-3 hover:bg-zinc-900/40 transition-colors group ${deletingId === doc.id ? 'opacity-50' : ''} ${selectedIds.includes(doc.id) ? 'bg-primary/5' : ''}`}>
+            {!isLixeira && (
+              <div className="w-8 flex justify-center">
+                <button onClick={() => toggleSelect(doc.id)} className="text-zinc-500 hover:text-primary transition-colors focus:outline-none">
+                  {selectedIds.includes(doc.id) ? <CheckSquare className="w-5 h-5 text-primary" /> : <Square className="w-5 h-5" />}
                 </button>
-                
-                <FileIcon className="w-5 h-5 text-red-500 flex-shrink-0" />
-                <div className="truncate pr-4 flex-1">
-                  <div className="font-medium truncate text-white">{doc.nome}</div>
-                  <div className="text-xs text-muted-foreground flex items-center gap-2">
-                    {doc.pastaNome && (
-                      <span className="bg-zinc-800 px-2 py-0.5 rounded text-zinc-300">Em: {doc.pastaNome}</span>
-                    )}
-                    <span className="md:hidden">{(doc.tamanhoBytes / 1024).toFixed(2)} KB</span>
-                  </div>
+              </div>
+            )}
+            
+            <div className="flex-1 flex items-center gap-3 overflow-hidden">
+              <FileText className="w-5 h-5 text-red-500 flex-shrink-0" />
+              <div className="flex flex-col truncate pr-4">
+                <span className="font-medium text-white truncate">{doc.nome}</span>
+                {doc.pastaNome && (
+                  <span className="text-xs text-zinc-500 truncate mt-0.5">Em: {doc.pastaNome}</span>
+                )}
+              </div>
+            </div>
+            
+            <div className="w-32 hidden md:block text-sm text-zinc-500">
+              {formatBytes(doc.tamanhoBytes)}
+            </div>
+            
+            <div className="w-32 hidden md:block text-sm text-zinc-500">
+              {new Date(doc.criadoEm).toLocaleDateString()}
+            </div>
+            
+            <div className="w-32 flex items-center justify-end">
+              {isLixeira ? (
+                <div className="flex items-center gap-1">
+                  <Button variant="ghost" size="icon" title="Restaurar" onClick={() => handleRestaurar(doc.id)} disabled={!!deletingId} className="text-zinc-500 hover:text-green-500">
+                    <RotateCcw className="w-4 h-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon" title="Excluir Definitivamente" onClick={() => handleExcluirPermanente(doc.id, doc.urlStorage)} disabled={!!deletingId} className="text-zinc-500 hover:text-red-500">
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
                 </div>
-              </div>
-              
-              <div className="w-32 hidden md:block text-sm text-zinc-400">
-                {(doc.tamanhoBytes / 1024).toFixed(2)} KB
-              </div>
-              
-              <div className="w-32 hidden md:block text-sm text-zinc-400 text-right pr-4">
-                {new Date(doc.criadoEm).toLocaleDateString('pt-BR')}
-              </div>
-              
-              <div className="flex items-center gap-1">
-              <ShareButton documentoId={doc.id} empresaId={empresaId} />
-              <DocumentPreviewModal empresaId={empresaId} nome={doc.nome} urlStorage={doc.urlStorage} />
-              <MoverDocumentoModal 
-                empresaId={empresaId} 
-                documentoId={doc.id} 
-                currentPastaId={doc.pastaId} 
-                pastas={todasPastas} 
-              />
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                title="Baixar" 
-                onClick={() => handleDownload(doc.urlStorage)}
-                className="text-zinc-500 hover:text-green-500 transition-colors"
-              >
-                <Download className="w-4 h-4" />
-              </Button>
-              <form action={excluirDocumento}>
-                <input type="hidden" name="id" value={doc.id} />
-                <input type="hidden" name="empresaId" value={empresaId} />
-                <input type="hidden" name="urlStorage" value={doc.urlStorage} />
-                <Button variant="ghost" size="icon" type="submit" title="Excluir" className="text-zinc-500 hover:text-red-500 transition-colors">
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              </form>
+              ) : (
+                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <ShareButton documentoId={doc.id} empresaId={empresaId} />
+                  <DocumentPreviewModal empresaId={empresaId} nome={doc.nome} urlStorage={doc.urlStorage} />
+                  <MoverDocumentoModal empresaId={empresaId} documentoId={doc.id} currentPastaId={doc.pastaId} pastas={todasPastas} />
+                  <Button variant="ghost" size="icon" title="Baixar" onClick={() => handleDownload(doc.urlStorage)} disabled={downloadingId === doc.urlStorage} className="text-zinc-500 hover:text-green-500">
+                    <Download className="w-4 h-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon" title="Excluir" onClick={() => handleDelete(doc.id, doc.urlStorage)} disabled={!!deletingId} className="text-zinc-500 hover:text-red-500">
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
-          )
-        })}
+        ))}
       </div>
     </div>
   )

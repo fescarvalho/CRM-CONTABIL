@@ -49,34 +49,54 @@ model AcessoEmpresa {
   @@unique([usuarioId, empresaId]) // Evita duplicidade de acesso
 }
 
-// Sistema de Arquivos Virtual (Estrutura de Pastas Lógicas)
 model Pasta {
-  id         String   @id @default(uuid())
-  nome       String   // Nome da pasta (ex: "Impostos 2026")
-  empresaId  String
-  
-  // Permite criar subpastas infinitas (parentId)
-  parentId   String?
-  parent     Pasta?   @relation("Subpastas", fields: [parentId], references: [id], onDelete: Cascade)
-  subpastas  Pasta[]  @relation("Subpastas")
+  id        String   @id @default(cuid())
+  nome      String
+  empresaId String
+  parentId  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  empresa   Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  parent    Pasta?  @relation("Subpastas", fields: [parentId], references: [id], onDelete: Cascade)
+  subpastas Pasta[] @relation("Subpastas")
 
   documentos Documento[]
-  empresa    Empresa  @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+
+  @@unique([empresaId, parentId, nome, deletedAt])
+  @@index([empresaId])
 }
 
-// Referência do arquivo PDF físico armazenado no Storage Bucket
 model Documento {
   id           String   @id @default(uuid())
-  nome         String   // Nome de exibição (ex: "DARF_Jan.pdf")
-  urlStorage   String   // Caminho real no bucket privado (ex: "empresa-id/pastas/arquivo.pdf")
+  nome         String   
+  urlStorage   String   @unique
   tamanhoBytes Int
-  tipoMime     String   @default("application/pdf") // Restringir a PDF
+  tipoMime     String   @default("application/pdf") 
   
-  pastaId    String?  // Se nulo, está na raiz da empresa
+  pastaId    String?  
   empresaId  String
   
   pasta      Pasta?   @relation(fields: [pastaId], references: [id], onDelete: SetNull)
   empresa    Empresa  @relation(fields: [empresaId], references: [id], onDelete: Cascade)
   
   criadoEm   DateTime @default(now())
+  deletedAt  DateTime?
+
+  @@index([empresaId])
+  @@index([pastaId])
+}
+
+model LogAuditoria {
+  id        String   @id @default(cuid())
+  usuarioId String
+  acao      String   // Ex: UPLOAD, DOWNLOAD, EXCLUIR, MOVER, RESTAURAR
+  detalhes  String   // Descrição extra ou JSON
+  createdAt DateTime @default(now())
+
+  usuario   Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@index([usuarioId])
+  @@index([createdAt])
 }

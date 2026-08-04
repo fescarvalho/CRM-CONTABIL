@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import { logout } from '@/app/actions/auth'
-import { Building2, Users, FileText, LogOut, FolderOpen } from 'lucide-react'
+import { Building2, Users, FileText, LogOut, FolderOpen, ShieldAlert } from 'lucide-react'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { EmpresaFilters } from './empresas/EmpresaFilters'
@@ -63,6 +63,11 @@ export default async function DashboardPage({
                 <Link href="/usuarios">
                   <Button variant="outline" className="bg-zinc-900/50 border-zinc-700 hover:bg-zinc-800 hover:text-white transition-colors">
                     <Users className="w-4 h-4 mr-2"/> Gerenciar Usuários
+                  </Button>
+                </Link>
+                <Link href="/auditoria">
+                  <Button variant="outline" className="bg-zinc-900/50 border-zinc-700 hover:bg-zinc-800 hover:text-white transition-colors">
+                    <ShieldAlert className="w-4 h-4 mr-2 text-blue-500"/> Auditoria
                   </Button>
                 </Link>
                 <Link href="/empresas">

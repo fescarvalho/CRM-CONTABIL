@@ -92,30 +92,52 @@ export function PastasListClient({ empresaId, pastas, todasPastas, hasDocumentos
           return (
             <div 
               key={pasta.id} 
-              className={`flex items-center justify-between p-4 transition-colors group ${isSelected ? 'bg-blue-500/5' : 'hover:bg-muted/50'}`}
+              className={`flex items-center justify-between p-4 transition-colors group ${isSelected ? 'bg-blue-500/5' : 'hover:bg-muted/50'} ${loadingId === pasta.id ? 'opacity-50' : ''}`}
             >
               <div className="flex items-center gap-3 flex-1 overflow-hidden">
-                <button onClick={(e) => toggleSelection(pasta.id, e)} className="text-zinc-500 hover:text-blue-400 transition-colors focus:outline-none z-10">
-                  {isSelected ? <CheckSquare className="w-5 h-5 text-blue-400" /> : <Square className="w-5 h-5" />}
-                </button>
-                <Link href={`/empresas/${empresaId}?folder=${pasta.id}`} className="flex items-center gap-3 flex-1 overflow-hidden">
-                  <Folder className="w-5 h-5 text-blue-500 flex-shrink-0" />
-                  <span className="font-medium truncate">{pasta.nome}</span>
-                </Link>
+                {!isLixeira && (
+                  <button onClick={(e) => toggleSelection(pasta.id, e)} className="text-zinc-500 hover:text-blue-400 transition-colors focus:outline-none z-10">
+                    {isSelected ? <CheckSquare className="w-5 h-5 text-blue-400" /> : <Square className="w-5 h-5" />}
+                  </button>
+                )}
+                {isLixeira ? (
+                  <div className="flex items-center gap-3">
+                    <Folder className="w-5 h-5 text-zinc-500" />
+                    <span className="font-medium truncate">{pasta.nome}</span>
+                  </div>
+                ) : (
+                  <Link href={`/empresas/${empresaId}?folder=${pasta.id}`} className="flex items-center gap-3 flex-1 overflow-hidden">
+                    <Folder className="w-5 h-5 text-blue-500 flex-shrink-0" />
+                    <span className="font-medium truncate">{pasta.nome}</span>
+                  </Link>
+                )}
               </div>
               
               <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                <MoverPastaModal 
-                  empresaId={empresaId} 
-                  pastaId={pasta.id} 
-                  pastas={todasPastas} 
-                />
-                <RenomearPastaModal empresaId={empresaId} pasta={pasta} />
-                <form action={excluirPasta}>
-                  <input type="hidden" name="id" value={pasta.id} />
-                  <input type="hidden" name="empresaId" value={empresaId} />
-                  <DeleteFolderButton />
-                </form>
+                {isLixeira ? (
+                  <>
+                    <Button variant="ghost" size="icon" title="Restaurar" onClick={() => handleRestaurar(pasta.id)} disabled={!!loadingId} className="text-zinc-500 hover:text-green-500">
+                      <RotateCcw className="w-4 h-4" />
+                    </Button>
+                    <Button variant="ghost" size="icon" title="Excluir Definitivamente" onClick={() => handleExcluirPermanente(pasta.id)} disabled={!!loadingId} className="text-zinc-500 hover:text-red-500">
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <MoverPastaModal 
+                      empresaId={empresaId} 
+                      pastaId={pasta.id} 
+                      pastas={todasPastas} 
+                    />
+                    <RenomearPastaModal empresaId={empresaId} pasta={pasta} />
+                    <form action={excluirPasta}>
+                      <input type="hidden" name="id" value={pasta.id} />
+                      <input type="hidden" name="empresaId" value={empresaId} />
+                      <DeleteFolderButton />
+                    </form>
+                  </>
+                )}
               </div>
             </div>
           )

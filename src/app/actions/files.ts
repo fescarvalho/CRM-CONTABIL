@@ -6,6 +6,7 @@ import { r2, BUCKET_NAME } from '@/lib/s3'
 import { PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { revalidatePath } from 'next/cache'
+import { registrarLogAuditoria } from './logs'
 
 async function checkAccess(empresaId: string) {
   const supabase = await createClient()
@@ -33,7 +34,7 @@ export async function criarPasta(formData: FormData) {
   
   await checkAccess(empresaId)
 
-  await prisma.pasta.create({
+  const pasta = await prisma.pasta.create({
     data: {
       nome,
       empresaId,
@@ -41,10 +42,15 @@ export async function criarPasta(formData: FormData) {
     }
   })
 
+  await registrarLogAuditoria('CRIAR_PASTA', `Criou a pasta ${nome}.`)
+
   revalidatePath(`/empresas/${empresaId}`)
 }
 
 export async function syncFolderStructure(empresaId: string, baseFolderId: string | null, folderPaths: string[]) {
+// ... omitted code since it's too long, but wait!
+// Actually let's just do replace_file_content on specific chunks.
+// Since it's a huge file, I should be careful.
   await checkAccess(empresaId)
 
   const todasPastas = await prisma.pasta.findMany({ where: { empresaId } })
@@ -128,10 +134,10 @@ export async function excluirPasta(formData: FormData) {
   
   await checkAccess(empresaId)
 
-  // Devido ao onDelete: SetNull no Documento e onDelete: Cascade na Pasta (subpastas),
-  // apagar a pasta manterá os documentos, movendo-os para a raiz automaticamente.
-  await prisma.pasta.delete({
-    where: { id }
+  // Soft Delete
+  await prisma.pasta.update({
+    where: { id },
+    data: { deletedAt: new Date() }
   })
 
   revalidatePath(`/empresas/${empresaId}`)
@@ -230,7 +236,7 @@ export async function uploadDocumento(formData: FormData) {
       ContentType: file.type || 'application/octet-stream'
     }))
 
-    await prisma.documento.create({
+      await prisma.documento.create({
       data: {
         id: docId,
         nome: file.name,
@@ -241,6 +247,7 @@ export async function uploadDocumento(formData: FormData) {
         empresaId,
       }
     })
+    await registrarLogAuditoria('UPLOAD', `Fez o upload do arquivo ${file.name}.`)
   }))
 
   revalidatePath(`/empresas/${empresaId}`)
@@ -248,6 +255,11 @@ export async function uploadDocumento(formData: FormData) {
 
 export async function getSignedDownloadUrl(empresaId: string, urlStorage: string) {
   await checkAccess(empresaId)
+  
+  const doc = await prisma.documento.findUnique({ where: { urlStorage } })
+  if (doc) {
+    await registrarLogAuditoria('VISUALIZAR', `Acessou/baixou o arquivo ${doc.nome}.`)
+  }
   
   const command = new GetObjectCommand({
     Bucket: BUCKET_NAME,
@@ -261,8 +273,40 @@ export async function getSignedDownloadUrl(empresaId: string, urlStorage: string
 export async function excluirDocumento(formData: FormData) {
   const id = formData.get('id') as string
   const empresaId = formData.get('empresaId') as string
-  const urlStorage = formData.get('urlStorage') as string
 
+  await checkAccess(empresaId)
+
+  const doc = await prisma.documento.update({
+    where: { id },
+    data: { deletedAt: new Date() }
+  })
+  
+  await registrarLogAuditoria('EXCLUIR', `Moveu o documento ${doc.nome} para a lixeira.`)
+
+  revalidatePath(`/empresas/${empresaId}`)
+}
+
+export async function restaurarDocumento(id: string, empresaId: string) {
+  await checkAccess(empresaId)
+  const doc = await prisma.documento.update({
+    where: { id },
+    data: { deletedAt: null }
+  })
+  await registrarLogAuditoria('RESTAURAR', `Restaurou o documento ${doc.nome} da lixeira.`)
+  revalidatePath(`/empresas/${empresaId}`)
+}
+
+export async function restaurarPasta(id: string, empresaId: string) {
+  await checkAccess(empresaId)
+  const pasta = await prisma.pasta.update({
+    where: { id },
+    data: { deletedAt: null }
+  })
+  await registrarLogAuditoria('RESTAURAR', `Restaurou a pasta ${pasta.nome} da lixeira.`)
+  revalidatePath(`/empresas/${empresaId}`)
+}
+
+export async function excluirDocumentoPermanente(id: string, empresaId: string, urlStorage: string) {
   await checkAccess(empresaId)
 
   await r2.send(new DeleteObjectCommand({
@@ -270,6 +314,14 @@ export async function excluirDocumento(formData: FormData) {
     Key: urlStorage,
   }))
 
-  await prisma.documento.delete({ where: { id } })
+  const doc = await prisma.documento.delete({ where: { id } })
+  await registrarLogAuditoria('EXCLUIR_PERMANENTE', `Excluiu permanentemente o documento ${doc.nome}.`)
+  revalidatePath(`/empresas/${empresaId}`)
+}
+
+export async function excluirPastaPermanente(id: string, empresaId: string) {
+  await checkAccess(empresaId)
+  const pasta = await prisma.pasta.delete({ where: { id } })
+  await registrarLogAuditoria('EXCLUIR_PERMANENTE', `Excluiu permanentemente a pasta ${pasta.nome}.`)
   revalidatePath(`/empresas/${empresaId}`)
 }

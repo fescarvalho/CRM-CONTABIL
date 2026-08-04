@@ -23,21 +23,28 @@ export default async function FileManagerPage({
   searchParams
 }: {
   params: Promise<{ id: string }>
-  searchParams: Promise<{ folder?: string, q?: string, sort?: string }>
+  searchParams: Promise<{ folder?: string, q?: string, sort?: string, lixeira?: string }>
 }) {
   const { id: empresaId } = await params
-  const { folder: currentFolderId, q: searchQuery, sort: sortQuery } = await searchParams
+  const { folder: currentFolderId, q: searchQuery, sort: sortQuery, lixeira: lixeiraQuery } = await searchParams
 
+  const isLixeira = lixeiraQuery === 'true'
   const supabase = await createClient()
 
   // 1. Iniciamos as queries de dados em paralelo ANTES da validação de acesso
   // Isso economiza centenas de milissegundos de "cachoeira" (waterfall) no banco de dados
   const isGlobalSearch = !!searchQuery
   let docWhere: any = { empresaId }
-  if (isGlobalSearch) {
-    docWhere.nome = { contains: searchQuery, mode: 'insensitive' }
+  
+  if (isLixeira) {
+    docWhere.deletedAt = { not: null }
   } else {
-    docWhere.pastaId = currentFolderId || null
+    docWhere.deletedAt = null
+    if (isGlobalSearch) {
+      docWhere.nome = { contains: searchQuery, mode: 'insensitive' }
+    } else {
+      docWhere.pastaId = currentFolderId || null
+    }
   }
 
   let orderBy: any = { nome: 'asc' }
@@ -48,7 +55,7 @@ export default async function FileManagerPage({
   else if (sortQuery === 'size_asc') orderBy = { tamanhoBytes: 'asc' }
 
   const empresaPromise = prisma.empresa.findUnique({ where: { id: empresaId } })
-  const todasPastasPromise = prisma.pasta.findMany({ where: { empresaId } })
+  const todasPastasPromise = prisma.pasta.findMany({ where: { empresaId, deletedAt: isLixeira ? { not: null } : null } })
   const documentosPromise = prisma.documento.findMany({ where: docWhere, orderBy })
 
   // 2. Enquanto os dados baixam, validamos a autenticação (também toma tempo)
@@ -106,11 +113,11 @@ export default async function FileManagerPage({
 
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">{empresa.razaoSocial}</h1>
+            <h1 className="text-3xl font-bold tracking-tight">{empresa.razaoSocial} {isLixeira && <span className="text-red-500 ml-2">(Lixeira)</span>}</h1>
             <p className="text-muted-foreground mt-1">CNPJ: {formatCNPJ(empresa.cnpj)}</p>
             <div className="flex items-center text-muted-foreground gap-2 mt-2">
               <Link href={`/empresas/${empresaId}`} className="hover:underline">Home</Link>
-              {breadcrumbs.map(b => (
+              {!isLixeira && breadcrumbs.map(b => (
                 <span key={b.id} className="flex items-center gap-2">
                   <span>/</span>
                   <Link href={`/empresas/${empresaId}?folder=${b.id}`} className="hover:underline">
@@ -122,12 +129,27 @@ export default async function FileManagerPage({
           </div>
           
           <div className="flex gap-4">
-            <CriarPastaModal empresaId={empresaId} currentFolderId={currentFolderId} />
-            <UploadDocumentoModal empresaId={empresaId} pastaId={currentFolderId} />
+            {isLixeira ? (
+              <Link href={`/empresas/${empresaId}`}>
+                <Button variant="outline" className="border-zinc-700">
+                  Voltar para Arquivos
+                </Button>
+              </Link>
+            ) : (
+              <>
+                <Link href={`/empresas/${empresaId}?lixeira=true`}>
+                  <Button variant="outline" className="border-red-500/50 text-red-500 hover:bg-red-500/10">
+                    <Trash2 className="w-4 h-4 mr-2" /> Lixeira
+                  </Button>
+                </Link>
+                <CriarPastaModal empresaId={empresaId} currentFolderId={currentFolderId} />
+                <UploadDocumentoModal empresaId={empresaId} pastaId={currentFolderId} />
+              </>
+            )}
           </div>
         </div>
 
-        <FileFilters />
+        {!isLixeira && <FileFilters />}
 
         <div className="border rounded-lg bg-card overflow-hidden">
           <PastasListClient 
@@ -135,6 +157,7 @@ export default async function FileManagerPage({
             pastas={pastas.map(p => ({ id: p.id, nome: p.nome, parentId: p.parentId }))}
             todasPastas={todasPastas.map(p => ({ id: p.id, nome: p.nome, parentId: p.parentId }))}
             hasDocumentos={documentos.length > 0}
+            isLixeira={isLixeira}
           />
           
           <DocumentosListClient 
@@ -146,13 +169,14 @@ export default async function FileManagerPage({
               tamanhoBytes: d.tamanhoBytes,
               pastaId: d.pastaId,
               criadoEm: d.criadoEm.toISOString(),
-              pastaNome: isGlobalSearch && d.pastaId ? todasPastas.find(p => p.id === d.pastaId)?.nome : undefined
+              pastaNome: (isGlobalSearch || isLixeira) && d.pastaId ? todasPastas.find(p => p.id === d.pastaId)?.nome : undefined
             }))}
             todasPastas={todasPastas.map(p => ({
               id: p.id,
               nome: p.nome,
               parentId: p.parentId
             }))}
+            isLixeira={isLixeira}
           />
         </div>
       </div>
