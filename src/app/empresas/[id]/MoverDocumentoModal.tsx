@@ -58,10 +58,12 @@ export function MoverDocumentoModal({ empresaId, documentoId, currentPastaId, pa
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
+      <DialogTrigger render={
         <Button variant="ghost" size="icon" className="text-zinc-500 hover:text-blue-400 transition-colors" title="Mover">
           <FolderSymlink className="w-4 h-4" />
         </Button>
+      }>
+        Mover
       </DialogTrigger>
       
       <DialogContent className="bg-zinc-950 border-zinc-800 text-white">

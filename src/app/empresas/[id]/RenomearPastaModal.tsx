@@ -37,10 +37,12 @@ export function RenomearPastaModal({ empresaId, pasta }: RenomearPastaModalProps
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
+      <DialogTrigger render={
         <Button variant="ghost" size="icon" className="text-zinc-500 hover:text-white transition-colors" title="Renomear">
           <Edit className="w-4 h-4" />
         </Button>
+      }>
+        Renomear
       </DialogTrigger>
       
       <DialogContent className="bg-zinc-950 border-zinc-800 text-white">
