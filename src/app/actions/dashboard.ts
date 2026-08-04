@@ -4,7 +4,7 @@ import prisma from '@/lib/prisma'
 import { createClient } from '@/lib/supabase/server'
 import type { Empresa } from '@prisma/client'
 
-export async function getDashboardData() {
+export async function getDashboardData(searchQuery?: string) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   
@@ -23,7 +23,15 @@ export async function getDashboardData() {
     const docStats = await prisma.documento.aggregate({ _sum: { tamanhoBytes: true } })
     const totalBytes = docStats._sum.tamanhoBytes || 0
 
+    const where = searchQuery ? {
+      OR: [
+        { razaoSocial: { contains: searchQuery, mode: 'insensitive' } as any },
+        { cnpj: { contains: searchQuery, mode: 'insensitive' } as any }
+      ]
+    } : undefined
+
     const empresas = await prisma.empresa.findMany({
+      where,
       orderBy: { razaoSocial: 'asc' }
     })
 
@@ -40,8 +48,18 @@ export async function getDashboardData() {
     }
   } else {
     // É contador
+    const where: any = { usuarioId: dbUser.id }
+    if (searchQuery) {
+      where.empresa = {
+        OR: [
+          { razaoSocial: { contains: searchQuery, mode: 'insensitive' } },
+          { cnpj: { contains: searchQuery, mode: 'insensitive' } }
+        ]
+      }
+    }
+
     const acessos = await prisma.acessoEmpresa.findMany({
-      where: { usuarioId: dbUser.id },
+      where,
       include: { empresa: true }
     })
 

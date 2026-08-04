@@ -6,11 +6,17 @@ import { logout } from '@/app/actions/auth'
 import { Building2, Users, FileText, LogOut, FolderOpen } from 'lucide-react'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { EmpresaFilters } from './empresas/EmpresaFilters'
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams
+}: {
+  searchParams: Promise<{ q?: string }>
+}) {
+  const { q } = await searchParams
   let data
   try {
-    data = await getDashboardData()
+    data = await getDashboardData(q)
   } catch (e) {
     console.error('Dashboard error:', e)
     return (
@@ -139,36 +145,39 @@ export default async function DashboardPage() {
 
         {/* Lista de Empresas (Acesso Rápido) */}
         <div>
-          <div className="flex items-center gap-2 mb-6">
-            <div className="w-1 h-6 bg-primary rounded-full"></div>
-            <h2 className="text-xl font-semibold text-white">
-              {data.role === 'ADMIN' ? 'Todas as Empresas' : 'Suas Empresas Atribuídas'}
-            </h2>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+            <div className="flex items-center gap-2">
+              <div className="w-1 h-6 bg-primary rounded-full"></div>
+              <h2 className="text-xl font-semibold text-white">
+                {data.role === 'ADMIN' ? 'Todas as Empresas' : 'Suas Empresas Atribuídas'}
+              </h2>
+            </div>
+            <div className="w-full sm:w-auto">
+              <EmpresaFilters />
+            </div>
           </div>
           
           {data.empresas.length === 0 ? (
             <Card className="bg-zinc-950/40 backdrop-blur-md border-zinc-800/50 border-dashed">
               <CardContent className="p-12 text-center text-zinc-500">
                 <Building2 className="w-12 h-12 mx-auto mb-4 opacity-20" />
-                Nenhuma empresa encontrada.
+                Nenhuma empresa encontrada com estes critérios.
               </CardContent>
             </Card>
           ) : (
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {data.empresas.map(empresa => (
-                <Card key={empresa.id} className="bg-zinc-950/40 backdrop-blur-md border-zinc-800/50 hover:border-primary/50 hover:shadow-primary/5 transition-all group flex flex-col">
-                  <CardHeader>
-                    <CardTitle className="text-lg text-white group-hover:text-primary transition-colors">{empresa.razaoSocial}</CardTitle>
-                    <p className="text-sm text-zinc-500 font-mono">CNPJ: {empresa.cnpj}</p>
-                  </CardHeader>
-                  <CardContent className="mt-auto pt-4">
-                    <Link href={`/empresas/${empresa.id}`}>
-                      <Button className="w-full bg-zinc-900 text-zinc-300 hover:bg-primary hover:text-white transition-all">
-                        <FolderOpen className="w-4 h-4 mr-2" /> Abrir Arquivos
-                      </Button>
-                    </Link>
-                  </CardContent>
-                </Card>
+                <div key={empresa.id} className="flex items-center justify-between p-4 bg-zinc-950/40 backdrop-blur-md border border-zinc-800/50 rounded-xl hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5 transition-all group">
+                  <div className="overflow-hidden pr-2">
+                    <h3 className="font-semibold text-white group-hover:text-primary transition-colors truncate">{empresa.razaoSocial}</h3>
+                    <p className="text-xs text-zinc-500 font-mono mt-1">CNPJ: {empresa.cnpj}</p>
+                  </div>
+                  <Link href={`/empresas/${empresa.id}`} className="shrink-0">
+                    <Button variant="secondary" size="sm" className="bg-zinc-900 text-zinc-300 hover:bg-primary hover:text-white transition-all h-8">
+                      <FolderOpen className="w-4 h-4 mr-2" /> Abrir
+                    </Button>
+                  </Link>
+                </div>
               ))}
             </div>
           )}
