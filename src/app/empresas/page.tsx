@@ -94,11 +94,21 @@ export default async function EmpresasPage() {
                     </div>
                   </TableCell>
                   <TableCell className="text-right space-x-2">
-                    <EmpresaFormModal empresa={empresa} />
+                    <EmpresaFormModal empresa={{
+                      id: empresa.id,
+                      razaoSocial: empresa.razaoSocial,
+                      cnpj: empresa.cnpj,
+                      status: empresa.status
+                    }} />
                     <AcessosModal 
                       empresaId={empresa.id}
                       razaoSocial={empresa.razaoSocial}
-                      usuarios={usuarios}
+                      usuarios={usuarios.map((u: any) => ({
+                        id: u.id,
+                        nome: u.nome,
+                        email: u.email,
+                        role: u.role
+                      }))}
                       acessosAtuais={empresa.acessos.map((a: any) => a.usuarioId)}
                     />
                   </TableCell>
