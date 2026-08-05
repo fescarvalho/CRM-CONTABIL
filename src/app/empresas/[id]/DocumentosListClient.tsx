@@ -154,7 +154,7 @@ export function DocumentosListClient({
           </div>
           <div className="w-32 hidden md:block">Tamanho</div>
           <div className="w-32 hidden md:block">Data</div>
-          <div className="w-32 text-right">Ações</div>
+          <div className="w-56 text-right">Ações</div>
         </div>
 
         {documentos.map((doc) => (
@@ -201,7 +201,7 @@ export function DocumentosListClient({
               {new Date(doc.criadoEm).toLocaleDateString()}
             </div>
             
-            <div className="w-32 flex items-center justify-end">
+            <div className="w-56 flex items-center justify-end">
               {isLixeira ? (
                 <div className="flex items-center gap-1">
                   <Button variant="ghost" size="icon" title="Restaurar" onClick={() => handleRestaurar(doc.id)} disabled={!!deletingId} className="text-zinc-500 hover:text-green-500">
