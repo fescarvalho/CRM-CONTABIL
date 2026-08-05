@@ -1,0 +1,34 @@
+name: Prisma DB Push
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'prisma/schema.prisma'
+      - '.github/workflows/prisma.yml'
+
+jobs:
+  deploy-db:
+    name: Sincronizar Banco de Dados
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checar o código (Checkout)
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Sincronizar Schema com Supabase
+        env:
+          # Usamos o secret do GitHub Actions, forçando-o a ser a DATABASE_URL
+          # para que o prisma.config.ts conecte diretamente (bypass do pgbouncer pooler)
+          DATABASE_URL: ${{ secrets.DIRECT_URL }}
+        run: npx prisma db push --accept-data-loss
