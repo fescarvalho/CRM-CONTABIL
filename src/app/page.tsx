@@ -183,7 +183,7 @@ export default async function DashboardPage({
                     <h3 className="font-semibold text-white group-hover:text-primary transition-colors truncate">{empresa.razaoSocial}</h3>
                     <p className="text-xs text-zinc-500 font-mono mt-1">CNPJ: {empresa.cnpj}</p>
                   </div>
-                  <Link href={`/empresas/${empresa.id}`} className="shrink-0">
+                  <Link prefetch={true} href={`/empresas/${empresa.id}`} className="shrink-0">
                     <Button variant="secondary" size="sm" className="bg-zinc-900 text-zinc-300 hover:bg-primary hover:text-white transition-all h-8">
                       <FolderOpen className="w-4 h-4 mr-2" /> Abrir
                     </Button>
@@ -221,7 +221,7 @@ export default async function DashboardPage({
                         <span className="text-xs text-zinc-500">{new Date(doc.criadoEm).toLocaleDateString()} {new Date(doc.criadoEm).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
                       </div>
                     </div>
-                    <Link href={`/empresas/${doc.empresaId}${doc.pastaId ? `?folder=${doc.pastaId}` : ''}`} className="shrink-0">
+                    <Link prefetch={true} href={`/empresas/${doc.empresaId}${doc.pastaId ? `?folder=${doc.pastaId}` : ''}`} className="shrink-0">
                       <Button variant="ghost" size="icon" className="text-zinc-500 hover:text-white hover:bg-zinc-800 opacity-0 group-hover:opacity-100 transition-all">
                         <ArrowRight className="w-4 h-4" />
                       </Button>

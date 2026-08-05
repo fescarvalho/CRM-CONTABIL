@@ -70,6 +70,7 @@ model Pasta {
 
   @@unique([empresaId, parentId, nome, deletedAt])
   @@index([empresaId])
+  @@index([empresaId, parentId, deletedAt]) // PWA Performance Index
 }
 
 model Documento {
@@ -91,6 +92,7 @@ model Documento {
 
   @@index([empresaId])
   @@index([pastaId])
+  @@index([empresaId, pastaId, deletedAt]) // PWA Performance Index
 }
 
 model LogAuditoria {
