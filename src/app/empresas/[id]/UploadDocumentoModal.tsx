@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label'
 import { File as FileIcon, Upload, X } from 'lucide-react'
 import { uploadDocumento, syncFolderStructure } from '@/app/actions/files'
 import { FolderUp } from 'lucide-react'
+import { useUpload } from './UploadContext'
 
 type UploadModalProps = {
   empresaId: string
@@ -15,8 +16,7 @@ type UploadModalProps = {
 }
 
 export function UploadDocumentoModal({ empresaId, pastaId }: UploadModalProps) {
-  const [open, setOpen] = useState(false)
-  const [files, setFiles] = useState<File[]>([])
+  const { isModalOpen: open, setIsModalOpen: setOpen, filesToUpload: files, setFilesToUpload: setFiles } = useUpload()
   const [isPending, setIsPending] = useState(false)
   const [error, setError] = useState('')
   const [progressMsg, setProgressMsg] = useState('')

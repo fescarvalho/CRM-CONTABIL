@@ -17,6 +17,8 @@ import { DeleteFolderButton } from './DeleteFolderButton'
 import { formatCNPJ } from '@/lib/utils'
 import { MoverPastaModal } from './MoverPastaModal'
 import { PastasListClient } from './PastasListClient'
+import { UploadProvider } from './UploadContext'
+import { GlobalDropzone } from './GlobalDropzone'
 
 export default async function FileManagerPage({
   params,
@@ -100,8 +102,10 @@ export default async function FileManagerPage({
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 p-8">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <UploadProvider>
+      <GlobalDropzone>
+        <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 p-8">
+          <div className="max-w-7xl mx-auto space-y-6">
         
         <div>
           <Link href="/empresas">
@@ -180,6 +184,8 @@ export default async function FileManagerPage({
           />
         </div>
       </div>
-    </div>
+        </div>
+      </GlobalDropzone>
+    </UploadProvider>
   )
 }
