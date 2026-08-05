@@ -173,7 +173,7 @@ export function DocumentosListClient({
             )}
             
             <div className="flex-1 flex items-center gap-3 overflow-hidden">
-              <FileText className="w-5 h-5 text-red-500 flex-shrink-0" />
+              <FileText className={`w-5 h-5 flex-shrink-0 ${(doc.nome.toLowerCase().endsWith('.doc') || doc.nome.toLowerCase().endsWith('.docx')) ? 'text-blue-500' : 'text-red-500'}`} />
               <div className="flex flex-col truncate pr-4">
                 <span className="font-medium text-white truncate">{doc.nome}</span>
                 <div className="flex items-center gap-2 mt-1">
