@@ -12,6 +12,8 @@ jobs:
   deploy-db:
     name: Sincronizar Banco de Dados
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.DIRECT_URL }}
     
     steps:
       - name: Checar o código (Checkout)
