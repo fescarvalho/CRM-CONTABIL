@@ -1,0 +1,33 @@
+name: Supabase Keep Alive
+
+on:
+  schedule:
+    # Roda a cada 3 dias à meia-noite (00:00)
+    - cron: '0 0 */3 * *'
+  # Permite rodar manualmente pelo painel do GitHub se quiser testar
+  workflow_dispatch:
+
+jobs:
+  ping-database:
+    name: Despertador do Banco de Dados
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.DIRECT_URL }}
+
+    steps:
+      - name: Checar o código
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Ping (Prisma DB Pull)
+        # Rodar o 'db pull' conecta no Supabase, lê as tabelas e vai embora.
+        # Isso conta como atividade oficial de banco de dados e impede a pausa de 7 dias!
+        run: npx prisma db pull
