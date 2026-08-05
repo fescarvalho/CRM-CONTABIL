@@ -325,3 +325,13 @@ export async function excluirPastaPermanente(id: string, empresaId: string) {
   await registrarLogAuditoria('EXCLUIR_PERMANENTE', `Excluiu permanentemente a pasta ${pasta.nome}.`)
   revalidatePath(`/empresas/${empresaId}`)
 }
+
+export async function atualizarTagsDocumento(id: string, empresaId: string, tags: string[]) {
+  await checkAccess(empresaId)
+  const doc = await prisma.documento.update({
+    where: { id },
+    data: { tags }
+  })
+  await registrarLogAuditoria('EDITAR_TAGS', `Atualizou as etiquetas do documento ${doc.nome}.`)
+  revalidatePath(`/empresas/${empresaId}`)
+}

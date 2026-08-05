@@ -7,7 +7,7 @@ import { MoverPastaModal } from './MoverPastaModal'
 import { RenomearPastaModal } from './RenomearPastaModal'
 import { DeleteFolderButton } from './DeleteFolderButton'
 import { MoverPastasEmMassaModal } from './MoverPastasEmMassaModal'
-import { excluirPasta, restaurarPasta, excluirPastaPermanente } from '@/app/actions/files'
+import { excluirPasta, restaurarPasta, excluirPastaPermanente, moverDocumento } from '@/app/actions/files'
 import { Button } from '@/components/ui/button'
 
 type Pasta = {
@@ -27,6 +27,7 @@ type Props = {
 export function PastasListClient({ empresaId, pastas, todasPastas, hasDocumentos, isLixeira }: Props) {
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [loadingId, setLoadingId] = useState<string | null>(null)
+  const [dragOverId, setDragOverId] = useState<string | null>(null)
 
   const handleRestaurar = async (id: string) => {
     if (!confirm('Deseja restaurar esta pasta e seu conteúdo para o local original?')) return
@@ -45,6 +46,44 @@ export function PastasListClient({ empresaId, pastas, todasPastas, hasDocumentos
       await excluirPastaPermanente(id, empresaId)
     } finally {
       setLoadingId(null)
+    }
+  }
+
+  const handleDragOver = (e: React.DragEvent, pastaId: string) => {
+    if (isLixeira) return
+    e.preventDefault() // Permite soltar
+    if (dragOverId !== pastaId) {
+      setDragOverId(pastaId)
+    }
+  }
+
+  const handleDragLeave = (e: React.DragEvent, pastaId: string) => {
+    if (isLixeira) return
+    e.preventDefault()
+    if (dragOverId === pastaId) {
+      setDragOverId(null)
+    }
+  }
+
+  const handleDrop = async (e: React.DragEvent, pastaId: string) => {
+    if (isLixeira) return
+    e.preventDefault()
+    setDragOverId(null)
+    
+    const docId = e.dataTransfer.getData('application/x-documento-id')
+    if (docId) {
+      setLoadingId(pastaId)
+      try {
+        const formData = new FormData()
+        formData.append('id', docId)
+        formData.append('empresaId', empresaId)
+        formData.append('pastaId', pastaId)
+        await moverDocumento(formData)
+      } catch (err) {
+        alert('Erro ao mover documento')
+      } finally {
+        setLoadingId(null)
+      }
     }
   }
 
@@ -114,10 +153,19 @@ export function PastasListClient({ empresaId, pastas, todasPastas, hasDocumentos
       <div className="divide-y divide-zinc-800/50">
         {pastas.map(pasta => {
           const isSelected = selectedIds.includes(pasta.id)
+          const isDragTarget = dragOverId === pasta.id
+          
           return (
             <div 
               key={pasta.id} 
-              className={`flex items-center justify-between p-4 transition-colors group ${isSelected ? 'bg-blue-500/5' : 'hover:bg-muted/50'} ${loadingId === pasta.id ? 'opacity-50' : ''}`}
+              onDragOver={(e) => handleDragOver(e, pasta.id)}
+              onDragLeave={(e) => handleDragLeave(e, pasta.id)}
+              onDrop={(e) => handleDrop(e, pasta.id)}
+              className={`flex items-center justify-between p-4 transition-colors group 
+                ${isSelected ? 'bg-blue-500/5' : 'hover:bg-muted/50'} 
+                ${loadingId === pasta.id ? 'opacity-50' : ''}
+                ${isDragTarget ? 'bg-blue-500/20 ring-2 ring-blue-500/50 ring-inset' : ''}
+              `}
             >
               <div className="flex items-center gap-3 flex-1 overflow-hidden">
                 {!isLixeira && (
@@ -127,13 +175,13 @@ export function PastasListClient({ empresaId, pastas, todasPastas, hasDocumentos
                 )}
                 {isLixeira ? (
                   <div className="flex items-center gap-3">
-                    <Folder className="w-5 h-5 text-zinc-500" />
+                    <Folder className={`w-5 h-5 ${isDragTarget ? 'text-blue-400' : 'text-zinc-500'}`} />
                     <span className="font-medium truncate text-white">{pasta.nome}</span>
                   </div>
                 ) : (
                   <Link href={`/empresas/${empresaId}?folder=${pasta.id}`} className="flex items-center gap-3 flex-1 overflow-hidden">
-                    <Folder className="w-5 h-5 text-blue-500 flex-shrink-0" />
-                    <span className="font-medium truncate text-white">{pasta.nome}</span>
+                    <Folder className={`w-5 h-5 flex-shrink-0 transition-colors ${isDragTarget ? 'text-white fill-blue-500/20' : 'text-blue-500'}`} />
+                    <span className={`font-medium truncate transition-colors ${isDragTarget ? 'text-blue-400' : 'text-white'}`}>{pasta.nome}</span>
                   </Link>
                 )}
               </div>

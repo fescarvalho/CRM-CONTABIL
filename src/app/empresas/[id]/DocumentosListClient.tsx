@@ -9,6 +9,7 @@ import { MoverDocumentoModal } from './MoverDocumentoModal'
 import { MoverEmMassaModal } from './MoverEmMassaModal'
 import { ShareButton } from './ShareButton'
 import { DocumentPreviewModal } from './DocumentPreviewModal'
+import { GerenciarTagsModal, getTagColor, getContrastColor } from './GerenciarTagsModal'
 
 type Documento = {
   id: string
@@ -18,6 +19,7 @@ type Documento = {
   pastaId: string | null
   criadoEm: string
   pastaNome?: string
+  tags?: string[]
 }
 
 export function DocumentosListClient({
@@ -100,6 +102,23 @@ export function DocumentosListClient({
     }
   }
 
+  const handleDragStart = (e: React.DragEvent, doc: Documento) => {
+    if (isLixeira) return
+    e.dataTransfer.setData('application/x-documento-id', doc.id)
+    e.dataTransfer.effectAllowed = 'move'
+    
+    // Fallback visually
+    const ghost = document.createElement('div')
+    ghost.style.padding = '8px 16px'
+    ghost.style.background = '#2563eb'
+    ghost.style.color = '#fff'
+    ghost.style.borderRadius = '8px'
+    ghost.textContent = doc.nome
+    document.body.appendChild(ghost)
+    e.dataTransfer.setDragImage(ghost, 0, 0)
+    setTimeout(() => document.body.removeChild(ghost), 0)
+  }
+
   if (documentos.length === 0) {
     return (
       <div className="p-8 text-center text-zinc-500">
@@ -139,7 +158,12 @@ export function DocumentosListClient({
         </div>
 
         {documentos.map((doc) => (
-          <div key={doc.id} className={`flex items-center px-4 py-3 hover:bg-zinc-900/40 transition-colors group ${deletingId === doc.id ? 'opacity-50' : ''} ${selectedIds.includes(doc.id) ? 'bg-primary/5' : ''}`}>
+          <div 
+            key={doc.id} 
+            draggable={!isLixeira}
+            onDragStart={(e) => handleDragStart(e, doc)}
+            className={`flex items-center px-4 py-3 hover:bg-zinc-900/40 transition-colors group ${deletingId === doc.id ? 'opacity-50' : ''} ${selectedIds.includes(doc.id) ? 'bg-primary/5' : ''} ${!isLixeira && 'cursor-grab active:cursor-grabbing'}`}
+          >
             {!isLixeira && (
               <div className="w-8 flex justify-center">
                 <button onClick={() => toggleSelect(doc.id)} className="text-zinc-500 hover:text-primary transition-colors focus:outline-none">
@@ -152,9 +176,20 @@ export function DocumentosListClient({
               <FileText className="w-5 h-5 text-red-500 flex-shrink-0" />
               <div className="flex flex-col truncate pr-4">
                 <span className="font-medium text-white truncate">{doc.nome}</span>
-                {doc.pastaNome && (
-                  <span className="text-xs text-zinc-500 truncate mt-0.5">Em: {doc.pastaNome}</span>
-                )}
+                <div className="flex items-center gap-2 mt-1">
+                  {doc.pastaNome && (
+                    <span className="text-xs text-zinc-500 truncate">Em: {doc.pastaNome}</span>
+                  )}
+                  {doc.tags && doc.tags.map(tag => (
+                    <span 
+                      key={tag} 
+                      className="text-[10px] px-1.5 py-0.5 rounded-sm font-bold shadow-sm"
+                      style={{ backgroundColor: getTagColor(tag), color: getContrastColor(getTagColor(tag)) }}
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
               </div>
             </div>
             
@@ -178,6 +213,7 @@ export function DocumentosListClient({
                 </div>
               ) : (
                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <GerenciarTagsModal empresaId={empresaId} documentoId={doc.id} initialTags={doc.tags || []} />
                   <ShareButton documentoId={doc.id} empresaId={empresaId} />
                   <DocumentPreviewModal empresaId={empresaId} nome={doc.nome} urlStorage={doc.urlStorage} />
                   <MoverDocumentoModal empresaId={empresaId} documentoId={doc.id} currentPastaId={doc.pastaId} pastas={todasPastas} />
