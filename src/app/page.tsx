@@ -3,10 +3,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import { logout } from '@/app/actions/auth'
-import { Building2, Users, FileText, LogOut, FolderOpen, ShieldAlert } from 'lucide-react'
+import { Building2, Users, FileText, LogOut, FolderOpen, ShieldAlert, ArrowRight } from 'lucide-react'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { EmpresaFilters } from './empresas/EmpresaFilters'
+import { GlobalSearch } from '@/components/GlobalSearch'
+import { formatBytes } from '@/lib/utils'
 
 export default async function DashboardPage({
   searchParams
@@ -83,6 +85,10 @@ export default async function DashboardPage({
               </Button>
             </form>
           </div>
+        </div>
+
+        <div className="flex justify-center w-full">
+          <GlobalSearch />
         </div>
 
         {/* ADMIN Stats */}
@@ -187,6 +193,45 @@ export default async function DashboardPage({
             </div>
           )}
         </div>
+
+        {/* Atividades Recentes */}
+        {data.documentosRecentes && data.documentosRecentes.length > 0 && (
+          <div className="mt-8">
+            <div className="flex items-center gap-2 mb-6">
+              <div className="w-1 h-6 bg-primary rounded-full"></div>
+              <h2 className="text-xl font-semibold text-white">Atividades Recentes</h2>
+            </div>
+            
+            <div className="bg-zinc-950/40 backdrop-blur-md border border-zinc-800/50 rounded-2xl overflow-hidden shadow-xl">
+              <div className="divide-y divide-zinc-800/50">
+                {data.documentosRecentes.map((doc: any) => (
+                  <div key={doc.id} className="flex items-center gap-4 p-4 hover:bg-zinc-900/40 transition-colors group">
+                    <div className="w-10 h-10 rounded-lg bg-red-500/10 flex items-center justify-center flex-shrink-0">
+                      <FileText className="w-5 h-5 text-red-500" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-sm font-medium text-white truncate group-hover:text-primary transition-colors">{doc.nome}</h4>
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 mt-1">
+                        <span className="text-xs text-zinc-500 flex items-center gap-1">
+                          <Building2 className="w-3 h-3" /> {doc.empresa.razaoSocial}
+                        </span>
+                        <span className="text-xs text-zinc-600 hidden sm:inline">•</span>
+                        <span className="text-xs text-zinc-500">{formatBytes(doc.tamanhoBytes)}</span>
+                        <span className="text-xs text-zinc-600 hidden sm:inline">•</span>
+                        <span className="text-xs text-zinc-500">{new Date(doc.criadoEm).toLocaleDateString()} {new Date(doc.criadoEm).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                      </div>
+                    </div>
+                    <Link href={`/empresas/${doc.empresaId}${doc.pastaId ? `?folder=${doc.pastaId}` : ''}`} className="shrink-0">
+                      <Button variant="ghost" size="icon" className="text-zinc-500 hover:text-white hover:bg-zinc-800 opacity-0 group-hover:opacity-100 transition-all">
+                        <ArrowRight className="w-4 h-4" />
+                      </Button>
+                    </Link>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
 
       </div>
     </div>
