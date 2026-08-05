@@ -22,9 +22,10 @@ type Props = {
   todasPastas: Pasta[]
   hasDocumentos: boolean
   isLixeira?: boolean
+  onNavigate?: (id: string) => void
 }
 
-export function PastasListClient({ empresaId, pastas, todasPastas, hasDocumentos, isLixeira }: Props) {
+export function PastasListClient({ empresaId, pastas, todasPastas, hasDocumentos, isLixeira, onNavigate }: Props) {
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [loadingId, setLoadingId] = useState<string | null>(null)
   const [dragOverId, setDragOverId] = useState<string | null>(null)
@@ -178,6 +179,11 @@ export function PastasListClient({ empresaId, pastas, todasPastas, hasDocumentos
                     <Folder className={`w-5 h-5 ${isDragTarget ? 'text-blue-400' : 'text-zinc-500'}`} />
                     <span className="font-medium truncate text-white">{pasta.nome}</span>
                   </div>
+                ) : onNavigate ? (
+                  <button onClick={() => onNavigate(pasta.id)} className="flex items-center gap-3 flex-1 overflow-hidden text-left focus:outline-none">
+                    <Folder className={`w-5 h-5 flex-shrink-0 transition-colors ${isDragTarget ? 'text-white fill-blue-500/20' : 'text-blue-500'}`} />
+                    <span className={`font-medium truncate transition-colors ${isDragTarget ? 'text-blue-400' : 'text-white'}`}>{pasta.nome}</span>
+                  </button>
                 ) : (
                   <Link href={`/empresas/${empresaId}?folder=${pasta.id}`} className="flex items-center gap-3 flex-1 overflow-hidden">
                     <Folder className={`w-5 h-5 flex-shrink-0 transition-colors ${isDragTarget ? 'text-white fill-blue-500/20' : 'text-blue-500'}`} />
