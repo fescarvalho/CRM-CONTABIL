@@ -46,6 +46,13 @@ export function DashboardEmpresasList({ empresas }: { empresas: EmpresaItem[] })
     }
   })
 
+  // Ordenar filiais por CNPJ
+  matrizesMap.forEach(matriz => {
+    if (matriz.filiais && matriz.filiais.length > 0) {
+      matriz.filiais.sort((a, b) => a.cnpj.localeCompare(b.cnpj))
+    }
+  })
+
   const agrupadas = Array.from(matrizesMap.values())
 
   return (

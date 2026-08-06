@@ -99,6 +99,13 @@ export default async function EmpresasPage({
     }
   })
 
+  // Ordenar filiais por CNPJ dentro de cada matriz
+  matrizesMap.forEach(matriz => {
+    if (matriz.filiais && matriz.filiais.length > 0) {
+      matriz.filiais.sort((a: any, b: any) => a.cnpj.localeCompare(b.cnpj))
+    }
+  })
+
   const empresasAgrupadas = Array.from(matrizesMap.values())
 
   return (
