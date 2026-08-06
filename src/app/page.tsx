@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import { logout } from '@/app/actions/auth'
-import { Building2, Users, FileText, LogOut, FolderOpen, ShieldAlert, ArrowRight } from 'lucide-react'
+import { Building2, Users, FileText, LogOut, FolderOpen, ShieldAlert, ArrowRight, CalendarCheck } from 'lucide-react'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { EmpresaFilters } from './empresas/EmpresaFilters'
@@ -79,6 +79,11 @@ export default async function DashboardPage({
                 </Link>
               </>
             )}
+            <Link href="/fechamentos">
+              <Button variant="outline" className="bg-primary/10 text-primary border-primary/30 hover:bg-primary/20 hover:text-primary transition-colors">
+                <CalendarCheck className="w-4 h-4 mr-2"/> Controle Contábil
+              </Button>
+            </Link>
             <form action={logout}>
               <Button variant="destructive" type="submit" className="shadow-lg shadow-destructive/20 transition-all hover:scale-105">
                 <LogOut className="w-4 h-4 mr-2" /> Sair

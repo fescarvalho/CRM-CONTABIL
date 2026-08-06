@@ -25,6 +25,8 @@ model Usuario {
   // Logs de ações tomadas pelo usuário
   logsAuditoria      LogAuditoria[]
   
+  controlesConcluidos ControleMensal[]
+  
   criadoEm  DateTime @default(now())
 }
 
@@ -37,6 +39,7 @@ model Empresa {
   acessos      AcessoEmpresa[]
   pastas       Pasta[]
   documentos   Documento[]
+  controlesMensais ControleMensal[]
   
   criadoEm     DateTime @default(now())
 }
@@ -106,4 +109,21 @@ model LogAuditoria {
 
   @@index([usuarioId])
   @@index([createdAt])
+}
+
+model ControleMensal {
+  id             String   @id @default(uuid())
+  empresaId      String
+  ano            Int
+  mes            Int?     // 1 a 12. Nulo se for fechamento anual
+  tipo           String   // "MENSAL" ou "ANUAL"
+  concluido      Boolean  @default(false)
+  concluidoPorId String?
+  concluidoEm    DateTime?
+  
+  empresa        Empresa  @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  concluidoPor   Usuario? @relation(fields: [concluidoPorId], references: [id])
+
+  @@unique([empresaId, ano, mes, tipo])
+  @@index([empresaId, ano])
 }
