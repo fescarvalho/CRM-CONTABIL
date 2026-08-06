@@ -1,6 +1,5 @@
 import { getEmpresas, getUsuarios } from '@/app/actions/empresas'
 import { Button } from '@/components/ui/button'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
@@ -11,6 +10,7 @@ import prisma from '@/lib/prisma'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { EmpresaFilters } from './EmpresaFilters'
+import { EmpresasList } from './EmpresasList'
 
 export default async function EmpresasPage({
   searchParams
@@ -71,6 +71,36 @@ export default async function EmpresasPage({
     )
   }
 
+  // Preparar os dados para a listagem (agrupar filiais)
+  const matrizesMap = new Map<string, any>()
+  const filiais: any[] = []
+  
+  // Apenas empresas que não têm matriz podem ser selecionadas como matriz
+  const todasEmpresasParaMatriz = empresas
+    .filter((e: any) => !e.matrizId)
+    .map((e: any) => ({ id: e.id, razaoSocial: e.razaoSocial }))
+
+  empresas.forEach((empresa: any) => {
+    empresa.filiais = []
+    if (!empresa.matrizId) {
+      matrizesMap.set(empresa.id, empresa)
+    } else {
+      filiais.push(empresa)
+    }
+  })
+
+  // Aninhar filiais nas matrizes correspondentes
+  filiais.forEach(filial => {
+    if (matrizesMap.has(filial.matrizId)) {
+      matrizesMap.get(filial.matrizId).filiais.push(filial)
+    } else {
+      // Se a matriz não está na lista (ex: usuário não tem acesso), adiciona como "matriz" avulsa
+      matrizesMap.set(filial.id, filial)
+    }
+  })
+
+  const empresasAgrupadas = Array.from(matrizesMap.values())
+
   return (
     <div className="min-h-screen bg-zinc-950 p-8 relative overflow-hidden">
       {/* Background Decorativo */}
@@ -94,73 +124,16 @@ export default async function EmpresasPage({
             <h1 className="text-3xl font-bold tracking-tight text-white">Gestão de Empresas</h1>
           </div>
           
-          <EmpresaFormModal />
+          <EmpresaFormModal matrizesDisponiveis={todasEmpresasParaMatriz} />
         </div>
 
         <EmpresaFilters />
 
-        <div className="border border-zinc-800/50 rounded-2xl bg-zinc-950/40 backdrop-blur-md overflow-hidden shadow-xl">
-          <Table>
-            <TableHeader className="bg-zinc-900/50">
-              <TableRow className="border-zinc-800/50 hover:bg-transparent">
-                <TableHead className="text-zinc-400 font-medium">Razão Social</TableHead>
-                <TableHead className="text-zinc-400 font-medium">CNPJ</TableHead>
-                <TableHead className="text-zinc-400 font-medium">Status</TableHead>
-                <TableHead className="text-zinc-400 font-medium">Usuários Atribuídos</TableHead>
-                <TableHead className="text-right text-zinc-400 font-medium">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {empresas.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center h-32 text-zinc-500">
-                    Nenhuma empresa encontrada
-                  </TableCell>
-                </TableRow>
-              )}
-              {empresas.map((empresa: any) => (
-                <TableRow key={empresa.id} className="border-zinc-800/50 hover:bg-zinc-900/40 transition-colors group">
-                  <TableCell className="font-medium text-white">{empresa.razaoSocial}</TableCell>
-                  <TableCell className="font-mono text-zinc-400">{formatCNPJ(empresa.cnpj)}</TableCell>
-                  <TableCell>
-                    <Badge className={empresa.status === 'Ativo' ? 'bg-primary/20 text-primary hover:bg-primary/30 border-primary/20' : 'bg-zinc-800 text-zinc-400'}>
-                      {empresa.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-2 flex-wrap">
-                      {empresa.acessos.map((a: any) => (
-                        <Badge key={a.usuarioId} variant="outline" className="border-zinc-700 text-zinc-300 bg-zinc-900/50">
-                          {a.usuario.nome}
-                        </Badge>
-                      ))}
-                      {empresa.acessos.length === 0 && <span className="text-zinc-600 text-sm italic">Nenhum</span>}
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-right space-x-2">
-                    <EmpresaFormModal empresa={{
-                      id: empresa.id,
-                      razaoSocial: empresa.razaoSocial,
-                      cnpj: empresa.cnpj,
-                      status: empresa.status
-                    }} />
-                    <AcessosModal 
-                      empresaId={empresa.id}
-                      razaoSocial={empresa.razaoSocial}
-                      usuarios={usuarios.map((u: any) => ({
-                        id: u.id,
-                        nome: u.nome,
-                        email: u.email,
-                        role: u.role
-                      }))}
-                      acessosAtuais={empresa.acessos.map((a: any) => a.usuarioId)}
-                    />
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+        <EmpresasList 
+          empresas={empresasAgrupadas} 
+          usuarios={usuarios} 
+          todasEmpresasParaMatriz={todasEmpresasParaMatriz}
+        />
       </div>
     </div>
   )

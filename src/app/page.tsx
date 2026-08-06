@@ -9,6 +9,7 @@ import { createClient } from '@/lib/supabase/server'
 import { EmpresaFilters } from './empresas/EmpresaFilters'
 import { GlobalSearch } from '@/components/GlobalSearch'
 import { formatBytes } from '@/lib/utils'
+import { DashboardEmpresasList } from './DashboardEmpresasList'
 
 export default async function DashboardPage({
   searchParams
@@ -177,25 +178,10 @@ export default async function DashboardPage({
             <Card className="bg-zinc-950/40 backdrop-blur-md border-zinc-800/50 border-dashed">
               <CardContent className="p-12 text-center text-zinc-500">
                 <Building2 className="w-12 h-12 mx-auto mb-4 opacity-20" />
-                Nenhuma empresa encontrada com estes critérios.
               </CardContent>
             </Card>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {data.empresas.map(empresa => (
-                <div key={empresa.id} className="flex items-center justify-between p-4 bg-zinc-950/40 backdrop-blur-md border border-zinc-800/50 rounded-xl hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5 transition-all group">
-                  <div className="overflow-hidden pr-2">
-                    <h3 className="font-semibold text-white group-hover:text-primary transition-colors truncate">{empresa.razaoSocial}</h3>
-                    <p className="text-xs text-zinc-500 font-mono mt-1">CNPJ: {empresa.cnpj}</p>
-                  </div>
-                  <Link prefetch={true} href={`/empresas/${empresa.id}`} className="shrink-0">
-                    <Button variant="secondary" size="sm" className="bg-zinc-900 text-zinc-300 hover:bg-primary hover:text-white transition-all h-8">
-                      <FolderOpen className="w-4 h-4 mr-2" /> Abrir
-                    </Button>
-                  </Link>
-                </div>
-              ))}
-            </div>
+            <DashboardEmpresasList empresas={data.empresas} />
           )}
         </div>
 

@@ -36,6 +36,10 @@ model Empresa {
   razaoSocial  String
   status       String   @default("Ativo") // Ativo, Inativo
   
+  matrizId     String?
+  matriz       Empresa?  @relation("MatrizFilial", fields: [matrizId], references: [id])
+  filiais      Empresa[] @relation("MatrizFilial")
+
   acessos      AcessoEmpresa[]
   pastas       Pasta[]
   documentos   Documento[]

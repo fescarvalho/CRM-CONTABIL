@@ -15,10 +15,12 @@ type EmpresaFormModalProps = {
     razaoSocial: string
     cnpj: string
     status: string
+    matrizId?: string | null
   }
+  matrizesDisponiveis?: { id: string, razaoSocial: string }[]
 }
 
-export function EmpresaFormModal({ empresa }: EmpresaFormModalProps) {
+export function EmpresaFormModal({ empresa, matrizesDisponiveis = [] }: EmpresaFormModalProps) {
   const [open, setOpen] = useState(false)
   const [isPending, setIsPending] = useState(false)
   const [cnpjValue, setCnpjValue] = useState(empresa ? formatCNPJ(empresa.cnpj) : '')
@@ -103,6 +105,21 @@ export function EmpresaFormModal({ empresa }: EmpresaFormModalProps) {
               placeholder="00.000.000/0000-00"
               className="bg-zinc-900/50 border-zinc-800 focus-visible:ring-primary/50 font-mono" 
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="matrizId" className="text-zinc-300">Matriz (Opcional)</Label>
+            <select 
+              id="matrizId" 
+              name="matrizId" 
+              defaultValue={empresa?.matrizId || ''}
+              className="w-full h-10 px-3 rounded-md bg-zinc-900/50 border border-zinc-800 text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+            >
+              <option value="">Nenhuma (É uma Matriz)</option>
+              {matrizesDisponiveis.map(m => (
+                <option key={m.id} value={m.id}>{m.razaoSocial}</option>
+              ))}
+            </select>
           </div>
 
           {isEditing && (

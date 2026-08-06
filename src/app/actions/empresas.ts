@@ -28,12 +28,14 @@ export async function createEmpresa(formData: FormData) {
   
   const razaoSocial = formData.get('razaoSocial') as string
   const cnpjRaw = formData.get('cnpj') as string
+  const matrizId = formData.get('matrizId') as string | null
   const cnpj = cnpjRaw.replace(/[^a-zA-Z0-9]/g, '').toUpperCase()
   
   await prisma.empresa.create({
     data: {
       razaoSocial,
       cnpj,
+      matrizId: matrizId || null,
     }
   })
   
@@ -46,6 +48,7 @@ export async function updateEmpresa(formData: FormData) {
   const id = formData.get('id') as string
   const razaoSocial = formData.get('razaoSocial') as string
   const status = formData.get('status') as string
+  const matrizId = formData.get('matrizId') as string | null
   const cnpjRaw = formData.get('cnpj') as string
   const cnpj = cnpjRaw.replace(/[^a-zA-Z0-9]/g, '').toUpperCase()
   
@@ -54,7 +57,8 @@ export async function updateEmpresa(formData: FormData) {
     data: {
       razaoSocial,
       cnpj,
-      status
+      status,
+      matrizId: matrizId || null,
     }
   })
   
