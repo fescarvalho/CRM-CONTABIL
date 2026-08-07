@@ -124,34 +124,52 @@ export function FileManagerClient({ empresa, todasPastas, todosDocumentos, isLix
     return crumbs
   }, [currentFolderId, todasPastas])
 
+  const handleVoltar = () => {
+    if (isGlobalSearch) {
+      setSearchQuery('')
+      return
+    }
+    if (currentFolderId) {
+      const currentFolder = todasPastas.find(p => p.id === currentFolderId)
+      setCurrentFolderId(currentFolder?.parentId || null)
+    }
+  }
+
   return (
     <UploadProvider>
       <GlobalDropzone>
         <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 p-8">
           <div className="max-w-7xl mx-auto space-y-6">
-            
-            <div>
-              <Link href="/empresas">
-                <Button variant="ghost" className="text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white pl-0">
-                  <ArrowLeft className="w-4 h-4 mr-2" /> Voltar para Empresas
-                </Button>
-              </Link>
-            </div>
 
-            <div className="flex items-center justify-between">
+            <div className="flex items-start justify-between">
               <div>
                 <h1 className="text-3xl font-bold tracking-tight">{empresa.razaoSocial} {isLixeira && <span className="text-red-500 ml-2">(Lixeira)</span>}</h1>
                 <p className="text-muted-foreground mt-1">CNPJ: {formatCNPJ(empresa.cnpj)}</p>
-                <div className="flex items-center text-muted-foreground gap-2 mt-2">
-                  <button onClick={() => { setCurrentFolderId(null); setSearchQuery('') }} className="hover:underline">Home</button>
-                  {!isLixeira && breadcrumbs.map(b => (
-                    <span key={b.id} className="flex items-center gap-2">
-                      <span>/</span>
-                      <button onClick={() => { setCurrentFolderId(b.id); setSearchQuery('') }} className="hover:underline">
-                        {b.nome}
-                      </button>
+                
+                <div className="flex items-center gap-3 mt-4">
+                  {(currentFolderId || isGlobalSearch) ? (
+                    <Button 
+                      variant="secondary" 
+                      size="sm" 
+                      onClick={handleVoltar} 
+                      className="bg-zinc-800 hover:bg-zinc-700 text-white rounded-full px-4"
+                    >
+                      <ArrowLeft className="w-4 h-4 mr-2" /> 
+                      {isGlobalSearch ? 'Limpar Pesquisa' : '⬅ Voltar uma pasta'}
+                    </Button>
+                  ) : (
+                    <Link href="/empresas">
+                      <Button variant="secondary" size="sm" className="bg-zinc-800 hover:bg-zinc-700 text-white rounded-full px-4">
+                        <ArrowLeft className="w-4 h-4 mr-2" /> Voltar para Empresas
+                      </Button>
+                    </Link>
+                  )}
+                  
+                  {!isLixeira && !isGlobalSearch && currentFolderId && (
+                    <span className="text-sm text-zinc-500 font-medium">
+                      📁 {breadcrumbs.map(b => b.nome).join(' / ')}
                     </span>
-                  ))}
+                  )}
                 </div>
               </div>
               

@@ -335,3 +335,59 @@ export async function atualizarTagsDocumento(id: string, empresaId: string, tags
   await registrarLogAuditoria('EDITAR_TAGS', `Atualizou as etiquetas do documento ${doc.nome}.`)
   revalidatePath(`/empresas/${empresaId}`)
 }
+
+export async function renomearDocumento(formData: FormData) {
+  const id = formData.get('id') as string
+  const nome = formData.get('nome') as string
+  const empresaId = formData.get('empresaId') as string
+  
+  await checkAccess(empresaId)
+
+  await prisma.documento.update({
+    where: { id },
+    data: { nome }
+  })
+
+  await registrarLogAuditoria('RENOMEAR_DOCUMENTO', `Renomeou um documento para ${nome}.`)
+  revalidatePath(`/empresas/${empresaId}`)
+}
+
+export async function excluirPastasEmMassa(formData: FormData) {
+  const empresaId = formData.get('empresaId') as string
+  const pastaIds = formData.getAll('pastaIds') as string[]
+  
+  await checkAccess(empresaId)
+
+  if (pastaIds.length > 0) {
+    await prisma.pasta.updateMany({
+      where: { 
+        id: { in: pastaIds },
+        empresaId
+      },
+      data: { deletedAt: new Date() }
+    })
+    await registrarLogAuditoria('EXCLUIR_MASSA', `Moveu ${pastaIds.length} pastas para a lixeira.`)
+  }
+
+  revalidatePath(`/empresas/${empresaId}`)
+}
+
+export async function excluirDocumentosEmMassa(formData: FormData) {
+  const empresaId = formData.get('empresaId') as string
+  const docIds = formData.getAll('docIds') as string[]
+  
+  await checkAccess(empresaId)
+
+  if (docIds.length > 0) {
+    await prisma.documento.updateMany({
+      where: { 
+        id: { in: docIds },
+        empresaId
+      },
+      data: { deletedAt: new Date() }
+    })
+    await registrarLogAuditoria('EXCLUIR_MASSA', `Moveu ${docIds.length} documentos para a lixeira.`)
+  }
+
+  revalidatePath(`/empresas/${empresaId}`)
+}

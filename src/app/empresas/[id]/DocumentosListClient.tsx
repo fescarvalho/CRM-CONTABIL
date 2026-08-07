@@ -10,6 +10,7 @@ import { MoverEmMassaModal } from './MoverEmMassaModal'
 import { ShareButton } from './ShareButton'
 import { DocumentPreviewModal } from './DocumentPreviewModal'
 import { GerenciarTagsModal, getTagColor, getContrastColor } from './GerenciarTagsModal'
+import { RenomearDocumentoModal } from './RenomearDocumentoModal'
 
 type Documento = {
   id: string
@@ -130,9 +131,26 @@ export function DocumentosListClient({
   return (
     <div>
       {!isLixeira && selectedIds.length > 0 && (
-        <div className="bg-primary/10 border-b border-primary/20 p-2 flex items-center justify-between">
-          <span className="text-sm font-medium text-primary px-2">{selectedIds.length} selecionado(s)</span>
-          <MoverEmMassaModal empresaId={empresaId} docIds={selectedIds} pastas={todasPastas} onSuccess={() => setSelectedIds([])} />
+        <div className="bg-blue-900/20 border-b border-blue-500/20 p-3 flex items-center justify-between animate-in fade-in slide-in-from-top-2">
+          <span className="text-sm font-medium text-blue-400 px-2">{selectedIds.length} selecionado(s)</span>
+          <div className="flex items-center gap-2">
+            <button onClick={() => setSelectedIds([])} className="text-sm text-zinc-400 hover:text-white px-2 mr-2">
+              Cancelar
+            </button>
+            <MoverEmMassaModal empresaId={empresaId} docIds={selectedIds} pastas={todasPastas} onSuccess={() => setSelectedIds([])} />
+            <form action={async (formData) => {
+              if(!confirm(`Tem certeza que deseja excluir ${selectedIds.length} documentos?`)) return;
+              formData.append('empresaId', empresaId);
+              selectedIds.forEach(id => formData.append('docIds', id));
+              const { excluirDocumentosEmMassa } = await import('@/app/actions/files');
+              await excluirDocumentosEmMassa(formData);
+              setSelectedIds([]);
+            }}>
+              <Button type="submit" variant="destructive" size="sm" className="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white border border-red-500/20">
+                <Trash2 className="w-4 h-4 mr-2" /> Excluir
+              </Button>
+            </form>
+          </div>
         </div>
       )}
 
@@ -215,6 +233,7 @@ export function DocumentosListClient({
                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                   <GerenciarTagsModal empresaId={empresaId} documentoId={doc.id} initialTags={doc.tags || []} />
                   <ShareButton documentoId={doc.id} empresaId={empresaId} />
+                  <RenomearDocumentoModal empresaId={empresaId} documentoId={doc.id} nomeAtual={doc.nome} />
                   <DocumentPreviewModal empresaId={empresaId} nome={doc.nome} urlStorage={doc.urlStorage} />
                   <MoverDocumentoModal empresaId={empresaId} documentoId={doc.id} currentPastaId={doc.pastaId} pastas={todasPastas} />
                   <Button variant="ghost" size="icon" title="Baixar" onClick={() => handleDownload(doc.urlStorage)} disabled={downloadingId === doc.urlStorage} className="text-zinc-500 hover:text-green-500">

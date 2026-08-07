@@ -124,7 +124,7 @@ export function PastasListClient({ empresaId, pastas, todasPastas, hasDocumentos
             {selectedIds.length} {selectedIds.length === 1 ? 'pasta selecionada' : 'pastas selecionadas'}
           </span>
           <div className="flex items-center gap-2">
-            <button onClick={() => setSelectedIds([])} className="text-sm text-zinc-400 hover:text-white px-2">
+            <button onClick={() => setSelectedIds([])} className="text-sm text-zinc-400 hover:text-white px-2 mr-2">
               Cancelar
             </button>
             <MoverPastasEmMassaModal 
@@ -133,6 +133,18 @@ export function PastasListClient({ empresaId, pastas, todasPastas, hasDocumentos
               pastas={todasPastas}
               onSuccess={() => setSelectedIds([])}
             />
+            <form action={async (formData) => {
+              if(!confirm(`Tem certeza que deseja excluir ${selectedIds.length} pastas?`)) return;
+              formData.append('empresaId', empresaId);
+              selectedIds.forEach(id => formData.append('pastaIds', id));
+              const { excluirPastasEmMassa } = await import('@/app/actions/files');
+              await excluirPastasEmMassa(formData);
+              setSelectedIds([]);
+            }}>
+              <Button type="submit" variant="destructive" size="sm" className="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white border border-red-500/20">
+                <Trash2 className="w-4 h-4 mr-2" /> Excluir
+              </Button>
+            </form>
           </div>
         </div>
       )}
