@@ -126,6 +126,39 @@ export async function toggleControle(
         }
       })
     }
+
+    // Marcar todos os meses se for um fechamento ANUAL
+    if (tipo === 'ANUAL') {
+      const existingMonths = await prisma.controleMensal.findMany({
+        where: { empresaId, ano, tipo: 'MENSAL' }
+      })
+      
+      const existingMonthsMap = new Map(existingMonths.map(m => [m.mes, m]))
+
+      const ops = []
+      for (let m = 1; m <= 12; m++) {
+        const currentMonth = existingMonthsMap.get(m)
+        if (currentMonth) {
+          if (!currentMonth.concluido) {
+            ops.push(prisma.controleMensal.update({
+              where: { id: currentMonth.id },
+              data: { concluido: true, concluidoPorId: dbUser.id, concluidoEm: new Date() }
+            }))
+          }
+        } else {
+          ops.push(prisma.controleMensal.create({
+            data: {
+              empresaId, ano, mes: m, tipo: 'MENSAL',
+              concluido: true, concluidoPorId: dbUser.id, concluidoEm: new Date()
+            }
+          }))
+        }
+      }
+      
+      if (ops.length > 0) {
+        await prisma.$transaction(ops)
+      }
+    }
   } else {
     // Marking as undone (pending)
     if (existing) {
